@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Accesorios para el cabello - Lazos, moños, scrunchies y más. Productos de alta calidad."
+    />
+    <meta
+      name="keywords"
+      content="accesorios cabello, lazos, moños, scrunchies, colitas, set moños"
+    />
+    <title>Accesorios para el Cabello | Lazos, Moños y Scrunchies</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="content/products.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Dosis:wght@200..800&family=Tilt+Neon&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="content/content.css" />
+    <link rel="stylesheet" href="auth.css" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/img-galery/logo.svg" />
+    <link rel="alternate icon" href="/favicon.ico" />
+
+    <!-- Preload critical resources -->
+    <link
+      rel="preload"
+      href="/img-galery/logo.svg"
+      as="image"
+      type="image/svg+xml"
+    />
+  </head>
+  <body class="loading">
+    <!-- Initial Loading Screen -->
+    <div class="initial-loader" role="status" aria-label="Cargando contenido">
+      <div class="logo-container">
+        <img
+          class="loader-logo"
+          src="/img-galery/logo.svg"
+          alt="Logo de Accesorios"
+        />
+        <div class="loader-text" aria-live="polite">Cargando productos...</div>
+        <div
+          class="loader-progress"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <div class="loader-progress-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skeleton Loader -->
+    <div class="skeleton-loader" aria-hidden="true">
+      <div class="skeleton-header">
+        <div class="skeleton-header-content">
+          <div class="skeleton-menu-toggle"></div>
+          <div class="skeleton-logo"></div>
+          <div class="skeleton-header-icons">
+            <div class="skeleton-search-icon"></div>
+            <div class="skeleton-cart-icon">
+              <div class="skeleton-cart-count"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="skeleton-section-title"></div>
+
+      <!-- Improved skeleton carousel with rectangular container -->
+      <div class="skeleton-carousel-wrapper">
+        <div class="skeleton-carousel-container">
+          <div class="skeleton-carousel-nav skeleton-carousel-nav-left"></div>
+          <div class="skeleton-carousel-content">
+            <div class="skeleton-carousel-main"></div>
+            <div class="skeleton-carousel-sides">
+              <div
+                class="skeleton-carousel-side skeleton-carousel-side-left"
+              ></div>
+              <div
+                class="skeleton-carousel-side skeleton-carousel-side-right"
+              ></div>
+            </div>
+          </div>
+          <div class="skeleton-carousel-nav skeleton-carousel-nav-right"></div>
+        </div>
+        <div class="skeleton-carousel-indicators">
+          <div class="skeleton-indicator"></div>
+          <div class="skeleton-indicator skeleton-indicator-active"></div>
+          <div class="skeleton-indicator"></div>
+          <div class="skeleton-indicator"></div>
+          <div class="skeleton-indicator"></div>
+        </div>
+      </div>
+
+      <div class="skeleton-filters">
+        <div class="skeleton-filter-select"></div>
+        <div class="skeleton-filter-select"></div>
+        <div class="skeleton-clear-btn"></div>
+      </div>
+
+      <div class="skeleton-products">
+        <div class="skeleton-card">
+          <div class="skeleton-img">
+            <div class="skeleton-add-to-cart-btn"></div>
+          </div>
+          <div class="skeleton-info">
+            <div class="skeleton-title"></div>
+            <div class="skeleton-price"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-img">
+            <div class="skeleton-add-to-cart-btn"></div>
+          </div>
+          <div class="skeleton-info">
+            <div class="skeleton-title"></div>
+            <div class="skeleton-price"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-img">
+            <div class="skeleton-add-to-cart-btn"></div>
+          </div>
+          <div class="skeleton-info">
+            <div class="skeleton-title"></div>
+            <div class="skeleton-price"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-img">
+            <div class="skeleton-add-to-cart-btn"></div>
+          </div>
+          <div class="skeleton-info">
+            <div class="skeleton-title"></div>
+            <div class="skeleton-price"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-img">
+            <div class="skeleton-add-to-cart-btn"></div>
+          </div>
+          <div class="skeleton-info">
+            <div class="skeleton-title"></div>
+            <div class="skeleton-price"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-img">
+            <div class="skeleton-add-to-cart-btn"></div>
+          </div>
+          <div class="skeleton-info">
+            <div class="skeleton-title"></div>
+            <div class="skeleton-price"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Header -->
+    <header class="header" role="banner">
+      <div class="header-content">
+        <div class="header-icons-left">
+          <button
+            class="menu-toggle"
+            id="menuToggle"
+            aria-label="Abrir menú de navegación"
+            aria-expanded="false"
+            aria-controls="mobileMenu"
+          >
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </button>
+          <button class="account-toggle" aria-label="Cuenta de usuario">
+            <img
+              src="/img-galery/account.svg"
+              alt="Cuenta"
+              class="account-icon"
+            />
+          </button>
+        </div>
+
+        <img class="logo" src="/img-galery/logo.svg" alt="Logo de Accesorios" />
+
+        <div class="header-icons-right">
+          <button
+            class="search-toggle"
+            id="searchToggle"
+            aria-label="Abrir búsqueda"
+            aria-expanded="false"
+            aria-controls="searchDropdown"
+          >
+            <img
+              src="/img-galery/search-icon.svg"
+              alt="Buscar"
+              class="search-icon"
+            />
+          </button>
+          <div
+            class="cart-toggle"
+            id="cartToggle"
+            role="button"
+            tabindex="0"
+            aria-label="Abrir carrito de compras"
+            aria-expanded="false"
+            aria-controls="cartDropdown"
+          >
+            <img
+              src="/img-galery/icon-carrito.svg"
+              alt="Carrito"
+              class="cart-icon"
+            />
+            <span class="cart-count" id="cartCount" aria-live="polite">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Dropdown -->
+      <div
+        class="search-dropdown"
+        id="searchDropdown"
+        role="search"
+        aria-hidden="true"
+      >
+        <div class="search-container">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Buscar productos..."
+            aria-label="Campo de búsqueda de productos"
+            autocomplete="off"
+            role="combobox"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="autocomplete-results"
+          />
+          <div
+            id="autocomplete-results"
+            class="autocomplete-results"
+            role="listbox"
+          ></div>
+          <button
+            class="search-close"
+            id="searchClose"
+            aria-label="Cerrar búsqueda"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
+      <!-- Cart Dropdown -->
+      <div
+        class="cart-dropdown"
+        id="cartDropdown"
+        role="dialog"
+        aria-label="Carrito de compras"
+        aria-hidden="true"
+      >
+        <div class="cart-header">
+          <h3>Carrito de Compras</h3>
+          <button class="cart-close" id="cartClose" aria-label="Cerrar carrito">
+            ×
+          </button>
+        </div>
+        <div class="cart-items" id="cartItems" role="list"></div>
+        <div class="cart-summary">
+          <p>Total: $<span id="cartTotal" aria-live="polite">0</span></p>
+          <button class="checkout-btn" type="button">Finalizar Compra</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Mobile Navigation Menu -->
+    <nav
+      class="mobile-menu"
+      id="mobileMenu"
+      role="navigation"
+      aria-label="Menú principal"
+      aria-hidden="true"
+    >
+      <div class="menu-header">
+        <h4>Menú Principal</h4>
+      </div>
+      <ul class="menu-list" role="list">
+        <li role="listitem">
+          <a
+            href="#inicio"
+            onclick="event.preventDefault(); showSection('inicio')"
+            aria-label="Ir a la sección de inicio"
+            class="menu-link"
+          >
+            <span>Inicio</span>
+          </a>
+        </li>
+        <li role="listitem">
+          <a
+            href="#lazos"
+            onclick="event.preventDefault(); showSection('lazos')"
+            aria-label="Ir a la sección de lazos"
+            class="menu-link"
+          >
+            <span>Lazos</span>
+          </a>
+        </li>
+        <li role="listitem">
+          <a
+            href="#monos"
+            onclick="event.preventDefault(); showSection('monos')"
+            aria-label="Ir a la sección de moños"
+            class="menu-link"
+          >
+            <span>Moños</span>
+          </a>
+        </li>
+        <li role="listitem">
+          <a
+            href="#colitas"
+            onclick="event.preventDefault(); showSection('colitas')"
+            aria-label="Ir a la sección de colitas"
+            class="menu-link"
+          >
+            <span>Colitas</span>
+          </a>
+        </li>
+        <li role="listitem">
+          <a
+            href="#scrunchies"
+            onclick="event.preventDefault(); showSection('scrunchies')"
+            aria-label="Ir a la sección de scrunchies"
+            class="menu-link"
+          >
+            <span>Scrunchies</span>
+          </a>
+        </li>
+        <li role="listitem">
+          <a
+            href="#setmonos"
+            onclick="event.preventDefault(); showSection('setmonos')"
+            aria-label="Ir a la sección de set de moños"
+            class="menu-link"
+          >
+            <span>Set Moños</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Menu Overlay -->
+    <div class="menu-overlay" id="menuOverlay" aria-hidden="true"></div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="auth-modal" style="display: none;">
+      <div class="auth-modal-content">
+        <span class="auth-close">&times;</span>
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
+          <button class="auth-tab" data-tab="register">Registrarse</button>
+        </div>
+        
+        <div id="loginForm" class="auth-form active">
+          <h3>Iniciar Sesión</h3>
+          <div class="input-group">
+            <input type="text" id="loginEmail" placeholder="Correo electrónico o nombre de usuario" required>
+          </div>
+          <div class="input-group">
+            <input type="password" id="loginPassword" placeholder="Contraseña" required>
+          </div>
+          <button id="loginBtn" class="auth-btn">Iniciar Sesión</button>
+          <div class="forgot-password">
+            <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
+          </div>
+          <div class="auth-divider">o</div>
+          <button id="googleLoginBtn" class="google-btn">
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjY0IDkuMjA0NTVDMTcuNjQgOC41NjY0MSAxNy41ODI3IDcuOTUyNzMgMTcuNDc2NCA3LjM2MzY0SDlWMTAuODQ1SDE0LjA0MzZDMTMuODQgMTEuOTcgMTMuMjU0NSAxMi45MjMgMTIuMzYzNiAxMy41NjE0VjE1LjgxOTFIMTUuMTA5MUMxNi42NTQ1IDE0LjQyMjcgMTcuNjQgMTIuMDMxOCAxNy42NCA5LjIwNDU1WiIgZmlsbD0iIzQyODVGNCIvPgo8cGF0aCBkPSJNOSAxOEM5IDEzLjUgMTEuNSAxMSAxNiAxMUMxNi41IDExIDE3IDExLjUgMTcgMTJDMTcgMTIuNSAxNi41IDEzIDE2IDEzSDlWMThaIiBmaWxsPSIjMzRBODUzIi8+CjxwYXRoIGQ9Ik05IDE4QzkgMTMuNSAxMS41IDExIDE2IDExQzE2LjUgMTEgMTcgMTEuNSAxNyAxMkMxNyAxMi41IDE2LjUgMTMgMTYgMTNIOVYxOFoiIGZpbGw9IiNGQkJDMDQiLz4KPHN2Zz4K" alt="Google">
+            Continuar con Google
+          </button>
+        </div>
+
+        <div id="registerForm" class="auth-form compact">
+          <h3>Crear Cuenta</h3>
+          <div class="input-row">
+            <div class="input-group half">
+              <input type="text" id="registerUsername" placeholder="Usuario (máx. 15)" maxlength="15" required>
+            </div>
+            <div class="input-group half">
+              <input type="email" id="registerEmail" placeholder="Email" required>
+            </div>
+          </div>
+          <div class="input-row">
+            <div class="input-group half">
+              <input type="password" id="registerPassword" placeholder="Contraseña (mín. 6)" required>
+              <div class="password-strength">
+                <div class="password-strength-bar" id="passwordStrengthBar"></div>
+              </div>
+            </div>
+            <div class="input-group half">
+              <input type="password" id="confirmPassword" placeholder="Repetir contraseña" required>
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="profile-image-label">Foto de perfil</label>
+            <input type="file" id="profileImage" accept="image/*" class="profile-image-input" placeholder="Foto (opcional)">
+          </div>
+          <div class="captcha-container compact">
+            <div class="captcha-row">
+              <canvas id="captchaCanvas" width="100" height="30"></canvas>
+              <button type="button" id="refreshCaptcha" class="refresh-captcha">
+                <img src="/img-galery/reset.svg" alt="Regenerar" width="14" height="14">
+              </button>
+              <input type="text" id="captchaInput" class="captcha-input" placeholder="Números" maxlength="5" required>
+            </div>
+          </div>
+          <button id="registerBtn" class="auth-btn">Crear Cuenta</button>
+        </div>
+
+        <div id="userProfile" class="user-profile" style="display: none;">
+          <h3>Mi Perfil</h3>
+          <div class="profile-header">
+            <div class="profile-picture-container">
+              <img id="userProfilePic" class="profile-picture" src="" alt="Foto de perfil">
+            </div>
+            <div class="profile-name">
+              <h4 id="userDisplayNameHeader"></h4>
+            </div>
+          </div>
+          <div class="user-info">
+
+            <div class="user-info-item">
+              <span class="user-info-label">Email:</span>
+              <span class="user-info-value" id="userEmail"></span>
+            </div>
+            <div class="user-info-item">
+              <span class="user-info-label">Cuenta creada:</span>
+              <span class="user-info-value" id="userCreated"></span>
+            </div>
+            <div class="user-info-item">
+              <span class="user-info-label">Última conexión:</span>
+              <span class="user-info-value" id="userLastLogin"></span>
+            </div>
+            <div class="user-info-item" id="tempPasswordItem" style="display: none;">
+              <span class="user-info-label">Contraseña temporal:</span>
+              <span class="user-info-value" id="userTempPassword"></span>
+            </div>
+            <div class="user-info-item" id="loginOptionsItem" style="display: none;">
+              <span class="user-info-label">Opciones de login:</span>
+              <span class="user-info-value" id="userLoginOptions"></span>
+            </div>
+          </div>
+          <button id="editProfileBtn" class="auth-btn" style="margin-bottom: 0.5rem;">Editar Perfil</button>
+          <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+      <!-- Section Title -->
+      <div class="section-title-wrapper">
+        <h1 class="section-title" id="sectionTitle">Productos Destacados</h1>
+        <p
+          class="search-term-display"
+          id="searchTermDisplay"
+          aria-live="polite"
+        ></p>
+        <div class="title-underline" aria-hidden="true"></div>
+      </div>
+
+      <!-- Carousel Section -->
+      <section
+        id="carousel-section"
+        class="section"
+        style="display: block"
+        aria-label="Carrusel de productos destacados"
+      >
+        <div class="carousel-boundary-container">
+          <div
+            id="carousel-announcer"
+            class="visually-hidden"
+            aria-live="polite"
+            aria-atomic="true"
+          ></div>
+          <div class="minimal-carousel-container">
+            <div class="carousel-wrapper">
+              <button
+                class="minimal-carousel-nav prev"
+                id="minimalCarouselPrev"
+                aria-label="Producto anterior"
+                type="button"
+              >
+                <i class="fas fa-chevron-left" aria-hidden="true"></i>
+              </button>
+
+              <ul
+                class="minimal-carousel-track"
+                id="minimalCarouselTrack"
+                role="region"
+                aria-label="Productos en carrusel"
+                aria-live="polite"
+              ></ul>
+
+              <button
+                class="minimal-carousel-nav next"
+                id="minimalCarouselNext"
+                aria-label="Siguiente producto"
+                type="button"
+              >
+                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <div
+              class="minimal-carousel-indicators"
+              id="minimalCarouselIndicators"
+              role="tablist"
+              aria-label="Indicadores de productos"
+            ></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Filters Bar -->
+      <div
+        class="filters-bar"
+        id="mainFiltersBar"
+        role="toolbar"
+        aria-label="Filtros de productos"
+      >
+        <div class="filters">
+          <select id="statusFilter" aria-label="Filtrar productos por estado">
+            <option value="">Filtrar por estado</option>
+            <option value="nuevo">Nuevos</option>
+            <option value="oferta">En Oferta</option>
+            <option value="agotado">Agotados</option>
+          </select>
+          <select id="colorFilter" aria-label="Filtrar productos por color">
+            <option value="">Filtrar por color</option>
+            <option value="Rosa">Rosa</option>
+            <option value="Azul">Azul</option>
+            <option value="Rojo">Rojo</option>
+            <option value="Amarillo">Amarillo</option>
+            <option value="Blanco">Blanco</option>
+            <option value="Gris">Gris</option>
+            <option value="Negro">Negro</option>
+            <option value="Verde">Verde</option>
+            <option value="Dorado">Dorado</option>
+            <option value="Plateado">Plateado</option>
+            <option value="Multicolor">Multicolor</option>
+            <option value="Naranja">Naranja</option>
+            <option value="Púrpura">Púrpura</option>
+          </select>
+          <select
+            id="telaFilter"
+            aria-label="Filtrar productos por tipo de tela"
+          >
+            <option value="">Filtrar por tela</option>
+            <option value="Seda">Seda</option>
+            <option value="Algodón">Algodón</option>
+            <option value="Gamuza">Gamuza</option>
+            <option value="Lana">Lana</option>
+            <option value="Sintético">Sintético</option>
+            <option value="Terciopelo">Terciopelo</option>
+            <option value="Licra">Licra</option>
+            <option value="Poliéster">Poliéster</option>
+          </select>
+          <button
+            id="clearFilters"
+            class="clear-btn"
+            type="button"
+            aria-label="Limpiar todos los filtros"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <main class="main-content" role="main">
+        <section
+          id="inicio"
+          class="section active"
+          aria-label="Sección de inicio"
+        ></section>
+        <section
+          id="lazos"
+          class="section"
+          aria-label="Sección de lazos"
+        ></section>
+        <section
+          id="monos"
+          class="section"
+          aria-label="Sección de moños"
+        ></section>
+        <section
+          id="colitas"
+          class="section"
+          aria-label="Sección de colitas"
+        ></section>
+        <section
+          id="scrunchies"
+          class="section"
+          aria-label="Sección de scrunchies"
+        ></section>
+        <section
+          id="setmonos"
+          class="section"
+          aria-label="Sección de set de moños"
+        ></section>
+
+        <div class="info-footer" id="infoFooter" role="contentinfo"></div>
+      </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+      <div class="footer-content">
+        <div
+          class="social-links"
+          role="list"
+          aria-label="Enlaces de redes sociales"
+        >
+          <a
+            href="https://www.instagram.com/yourprofile"
+            target="_blank"
+            aria-label="Visitar nuestro perfil de Instagram (se abre en una nueva ventana)"
+            rel="noopener noreferrer"
+            role="listitem"
+          >
+            <i class="fab fa-instagram" aria-hidden="true"></i>
+          </a>
+          <a
+            href="https://www.facebook.com/yourprofile"
+            target="_blank"
+            aria-label="Visitar nuestro perfil de Facebook (se abre en una nueva ventana)"
+            rel="noopener noreferrer"
+            role="listitem"
+          >
+            <i class="fab fa-facebook-f" aria-hidden="true"></i>
+          </a>
+          <a
+            href="https://www.tiktok.com/@yourprofile"
+            target="_blank"
+            aria-label="Visitar nuestro perfil de TikTok (se abre en una nueva ventana)"
+            rel="noopener noreferrer"
+            role="listitem"
+          >
+            <i class="fab fa-tiktok" aria-hidden="true"></i>
+          </a>
+          <a
+            href="https://wa.me/YOUR_WHATSAPP_NUMBER"
+            target="_blank"
+            aria-label="Contactar por WhatsApp (se abre en una nueva ventana)"
+            rel="noopener noreferrer"
+            role="listitem"
+          >
+            <i class="fab fa-whatsapp" aria-hidden="true"></i>
+          </a>
+        </div>
+        <p>
+          &copy; 2024 Accesorios para el Cabello. Todos los derechos reservados.
+        </p>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="data.js"></script>
+    <script src="content/content.js"></script>
+    <script src="script.js"></script>
+    <script type="module" src="firebase.js"></script>
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+      async
+      defer
+    ></script>
+    <script src="turnstile-config.js"></script>
+
+    <script src="auth.js"></script>
+    
+
+
+    <!-- Enhanced Loading and Initialization Script -->
+    <script>
+      // Error handling wrapper
+      function safeExecute(fn, errorContext = "Unknown") {
+        try {
+          return fn();
+        } catch (error) {
+          console.error(`Error in ${errorContext}:`, error);
+          return null;
+        }
+      }
+
+      // Initial loading screen with improved progress simulation
+      document.addEventListener("DOMContentLoaded", () => {
+        // Check if the site has been loaded once in this session
+        if (sessionStorage.getItem("siteLoadedOnce")) {
+          // If so, hide loaders immediately without animations
+          document.body.classList.remove("loading");
+          const initialLoader = document.querySelector(".initial-loader");
+          if (initialLoader) {
+            initialLoader.style.display = "none";
+          }
+        } else {
+          // This is the first visit in the session, show the loaders and animations.
+          safeExecute(() => {
+            const progressBar = document.querySelector(".loader-progress-bar");
+            const loaderText = document.querySelector(".loader-text");
+
+            if (progressBar && loaderText) {
+              let progress = 0;
+              const messages = [
+                "Cargando productos...",
+                "Preparando carrusel...",
+                "Configurando filtros...",
+                "Casi listo...",
+              ];
+              let messageIndex = 0;
+
+              const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+
+                progressBar.style.width = progress + "%";
+                progressBar.setAttribute("aria-valuenow", Math.round(progress));
+
+                if (
+                  progress > messageIndex * 25 &&
+                  messageIndex < messages.length
+                ) {
+                  loaderText.textContent = messages[messageIndex];
+                  messageIndex++;
+                }
+
+                if (progress >= 100) {
+                  clearInterval(interval);
+                  loaderText.textContent = "¡Listo!";
+                  setTimeout(() => {
+                    const initialLoader =
+                      document.querySelector(".initial-loader");
+                    if (initialLoader) {
+                      initialLoader.classList.add("fade-out");
+                      initialLoader.setAttribute("aria-hidden", "true");
+                      setTimeout(() => {
+                        initialLoader.style.display = "none";
+                      }, 800);
+                    }
+                  }, 500);
+                }
+              }, 100);
+            }
+          }, "Initial loader setup");
+
+          // Hide skeleton loader after a reasonable time
+          setTimeout(() => {
+            safeExecute(() => {
+              document.body.classList.remove("loading");
+              const skeletonLoader = document.querySelector(".skeleton-loader");
+              if (skeletonLoader) {
+                skeletonLoader.setAttribute("aria-hidden", "true");
+              }
+            }, "Skeleton loader removal");
+          }, 3500); // Reduced from 6.5s to 3.5s
+
+          // Set the flag so this doesn't run again in this session
+          sessionStorage.setItem("siteLoadedOnce", "true");
+        }
+      });
+
+      // Enhanced section management with carousel integration
+      const originalShowSection = window.showSection;
+      window.showSection = function (seccion) {
+        // Don't interfere if modal is open
+        if (document.getElementById('authModal') && document.getElementById('authModal').style.display === 'flex') {
+          return;
+        }
+        
+        safeExecute(() => {
+          // Call original function if it exists
+          if (
+            originalShowSection &&
+            typeof originalShowSection === "function"
+          ) {
+            originalShowSection(seccion);
+          }
+
+          // Handle carousel visibility with error handling
+          if (
+            window.handleMinimalCarouselSectionChange &&
+            typeof window.handleMinimalCarouselSectionChange === "function"
+          ) {
+            window.handleMinimalCarouselSectionChange(seccion);
+          }
+
+          // Update ARIA attributes for sections
+          document.querySelectorAll(".section").forEach((section) => {
+            const isActive = section.id === seccion;
+            section.setAttribute("aria-hidden", !isActive);
+          });
+
+          // Update page title based on section
+          const sectionTitles = {
+            inicio: "Productos Destacados",
+            lazos: "Lazos para el Cabello",
+            monos: "Moños para el Cabello",
+            colitas: "Colitas para el Cabello",
+            scrunchies: "Scrunchies para el Cabello",
+            setmonos: "Set de Moños",
+          };
+
+          const newTitle = sectionTitles[seccion] || "Productos Destacados";
+          document.title = `${newTitle} | Accesorios para el Cabello`;
+
+          const sectionTitleElement = document.getElementById("sectionTitle");
+          if (sectionTitleElement) {
+            sectionTitleElement.textContent = newTitle;
+          }
+        }, "Section change handling");
+      };
+
+      // Initialize carousel after everything loads
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          safeExecute(() => {
+            if (
+              window.handleMinimalCarouselSectionChange &&
+              typeof window.handleMinimalCarouselSectionChange === "function"
+            ) {
+              window.handleMinimalCarouselSectionChange("inicio");
+            }
+          }, "Carousel initialization");
+        }, 100);
+      });
+
+      // Enhanced error handling for images
+      function handleImageError(
+        img,
+        fallbackSrc = "/img-galery/placeholder.jpg"
+      ) {
+        if (img && img.src !== fallbackSrc) {
+          img.onerror = null; // Prevent infinite loop
+          img.src = fallbackSrc;
+          img.classList.add("image-error");
+          img.setAttribute(
+            "alt",
+            img.getAttribute("alt") + " (imagen no disponible)"
+          );
+        }
+      }
+
+      // Global error handler
+      window.addEventListener("error", function (e) {
+        if (e.target && e.target.tagName === "IMG") {
+          handleImageError(e.target);
+        }
+        console.error("Global error:", e.error);
+      });
+
+      // Unhandled promise rejection handler
+      window.addEventListener("unhandledrejection", function (e) {
+        console.error("Unhandled promise rejection:", e.reason);
+      });
+
+      // Performance monitoring (optional)
+      if ("performance" in window) {
+        window.addEventListener("load", function () {
+          setTimeout(function () {
+            const perfData = performance.getEntriesByType("navigation")[0];
+            if (perfData) {
+              console.log(
+                "Page load time:",
+                perfData.loadEventEnd - perfData.loadEventStart,
+                "ms"
+              );
+            }
+          }, 0);
+        });
+      }
+
+      // Service worker registration (optional, for future PWA support)
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          // Uncomment when you have a service worker
+          // navigator.serviceWorker.register('/sw.js')
+          //   .then(function(registration) {
+          //     console.log('SW registered: ', registration);
+          //   })
+          //   .catch(function(registrationError) {
+          //     console.log('SW registration failed: ', registrationError);
+          //   });
+        });
+      }
+    </script>
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      // Your web app's Firebase configuration
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyB0_TF5t-v5JJBZ2hJ9RwnJUA1Fj49MK7w",
+        authDomain: "noe-lazos-56970.firebaseapp.com",
+        projectId: "noe-lazos-56970",
+        storageBucket: "noe-lazos-56970.firebasestorage.app",
+        messagingSenderId: "732377752795",
+        appId: "1:732377752795:web:1a23a88f50d73b710298fe",
+        measurementId: "G-R8J6YEM6T8",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+    </script>
+  </body>
+</html>

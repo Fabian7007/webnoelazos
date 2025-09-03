@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Detalle del Producto</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="details.css" />
+    <link rel="stylesheet" href="../auth.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      crossorigin="anonymous"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Dosis:wght@200..800&family=Tilt+Neon&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="header">
+      <div class="header-content">
+        <div class="header-icons-left">
+          <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </button>
+          <button
+            class="account-toggle"
+            aria-label="Cuenta de usuario"
+          >
+            <img
+              src="../img-galery/account.svg"
+              alt="Cuenta"
+              class="account-icon"
+            />
+          </button>
+        </div>
+        <img class="logo" src="/img-galery/logo.svg" alt="Logo" />
+        <div class="header-icons-right">
+          <button class="search-toggle" id="searchToggle" aria-label="Buscar">
+            <img
+              src="/img-galery/search-icon.svg"
+              alt="Buscar"
+              class="search-icon"
+            />
+          </button>
+          <div
+            class="cart-toggle"
+            id="cartToggle"
+            aria-label="Carrito de compras"
+          >
+            <img
+              src="/img-galery/icon-carrito.svg"
+              alt="Carrito"
+              class="cart-icon"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Dropdown with Autocomplete -->
+      <div
+        class="search-dropdown"
+        id="searchDropdown"
+        role="search"
+        aria-hidden="true"
+      >
+        <div class="search-container">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Buscar productos..."
+            aria-label="Campo de búsqueda de productos"
+            autocomplete="off"
+            role="combobox"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="autocomplete-results"
+          />
+          <div
+            id="autocomplete-results"
+            class="autocomplete-results"
+            role="listbox"
+          ></div>
+          <button
+            class="search-close"
+            id="searchClose"
+            aria-label="Cerrar búsqueda"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="cart-dropdown"
+        id="cartDropdown"
+        aria-label="Detalle del carrito"
+      >
+        <div class="cart-header">
+          <h3>Carrito de Compras</h3>
+          <button class="cart-close" id="cartClose" aria-label="Cerrar carrito">
+            ×
+          </button>
+        </div>
+        <div class="cart-items" id="cartItems"></div>
+        <div class="cart-summary">
+          <p>Total: $<span id="cartTotal">0</span></p>
+          <button class="checkout-btn">Finalizar Compra</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="mobile-menu" id="mobileMenu" aria-label="Menú principal">
+      <div class="menu-header">
+        <h4>Menú Principal</h4>
+      </div>
+      <ul class="menu-list">
+        <li>
+          <a href="../index.html#inicio" class="menu-link"
+            ><span>Inicio</span></a
+          >
+        </li>
+        <li>
+          <a href="../index.html#lazos" class="menu-link"><span>Lazos</span></a>
+        </li>
+        <li>
+          <a href="../index.html#monos" class="menu-link"><span>Moños</span></a>
+        </li>
+        <li>
+          <a href="../index.html#colitas" class="menu-link"
+            ><span>Colitas</span></a
+          >
+        </li>
+        <li>
+          <a href="../index.html#scrunchies" class="menu-link"
+            ><span>Scrunchies</span></a
+          >
+        </li>
+        <li>
+          <a href="../index.html#setmonos" class="menu-link"
+            ><span>Set Moños</span></a
+          >
+        </li>
+      </ul>
+    </nav>
+
+    <div class="menu-overlay" id="menuOverlay"></div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="auth-modal" style="display: none;">
+      <div class="auth-modal-content">
+        <span class="auth-close">&times;</span>
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
+          <button class="auth-tab" data-tab="register">Registrarse</button>
+        </div>
+        
+        <div id="loginForm" class="auth-form active">
+          <h3>Iniciar Sesión</h3>
+          <div class="input-group">
+            <input type="email" id="loginEmail" placeholder="Correo electrónico" required>
+          </div>
+          <div class="input-group">
+            <input type="password" id="loginPassword" placeholder="Contraseña" required>
+          </div>
+          <button id="loginBtn" class="auth-btn">Iniciar Sesión</button>
+          <div class="auth-divider">o</div>
+          <button id="googleLoginBtn" class="google-btn">
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjY0IDkuMjA0NTVDMTcuNjQgOC41NjY0MSAxNy41ODI3IDcuOTUyNzMgMTcuNDc2NCA3LjM2MzY0SDlWMTAuODQ1SDE0LjA0MzZDMTMuODQgMTEuOTcgMTMuMjU0NSAxMi45MjMgMTIuMzYzNiAxMy41NjE0VjE1LjgxOTFIMTUuMTA5MUMxNi42NTQ1IDE0LjQyMjcgMTcuNjQgMTIuMDMxOCAxNy42NCA5LjIwNDU1WiIgZmlsbD0iIzQyODVGNCIvPgo8cGF0aCBkPSJNOSAxOEM5IDEzLjUgMTEuNSAxMSAxNiAxMUMxNi41IDExIDE3IDExLjUgMTcgMTJDMTcgMTIuNSAxNi41IDEzIDE2IDEzSDlWMThaIiBmaWxsPSIjMzRBODUzIi8+CjxwYXRoIGQ9Ik05IDE4QzkgMTMuNSAxMS41IDExIDE2IDExQzE2LjUgMTEgMTcgMTEuNSAxNyAxMkMxNyAxMi41IDE2LjUgMTMgMTYgMTNIOVYxOFoiIGZpbGw9IiNGQkJDMDQiLz4KPHN2Zz4K" alt="Google">
+            Continuar con Google
+          </button>
+        </div>
+
+        <div id="registerForm" class="auth-form">
+          <h3>Crear Cuenta</h3>
+          <div class="input-group">
+            <input type="text" id="registerUsername" placeholder="Nombre de usuario (máx. 15 caracteres)" maxlength="15" required>
+            <div class="input-hint">Solo letras, números y guiones bajos</div>
+          </div>
+          <div class="input-group">
+            <input type="email" id="registerEmail" placeholder="Correo electrónico" required>
+          </div>
+          <div class="input-group">
+            <input type="password" id="registerPassword" placeholder="Contraseña (mín. 6 caracteres)" required>
+            <div class="input-hint">Mínimo 6 caracteres</div>
+            <div class="password-strength">
+              <div class="password-strength-bar" id="passwordStrengthBar"></div>
+            </div>
+          </div>
+          <div class="input-group">
+            <input type="password" id="confirmPassword" placeholder="Repetir contraseña" required>
+            <div class="input-hint">Debe coincidir con la contraseña anterior</div>
+          </div>
+          <div class="input-group">
+            <label for="profileImage" class="profile-image-label">Foto de perfil (opcional, máx. 1MB):</label>
+            <input type="file" id="profileImage" accept="image/*" class="profile-image-input">
+            <div class="input-hint">JPG, PNG o GIF - Máximo 1MB</div>
+          </div>
+          <div class="captcha-container">
+            <div class="captcha-question">Escribe los números que ves:</div>
+            <canvas id="captchaCanvas" width="120" height="40"></canvas>
+            <button type="button" id="refreshCaptcha" class="refresh-captcha">
+              <img src="../img-galery/reset.svg" alt="Regenerar" width="16" height="16">
+            </button>
+            <input type="text" id="captchaInput" class="captcha-input" placeholder="Números" maxlength="5" required>
+          </div>
+          <button id="registerBtn" class="auth-btn">Crear Cuenta</button>
+        </div>
+
+        <div id="userProfile" class="user-profile" style="display: none;">
+          <h3>Mi Perfil</h3>
+          <div class="profile-picture-container">
+            <img id="userProfilePic" class="profile-picture" src="" alt="Foto de perfil">
+          </div>
+          <div class="user-info">
+            <div class="user-info-item">
+              <span class="user-info-label">Usuario:</span>
+              <span class="user-info-value" id="userDisplayName"></span>
+            </div>
+            <div class="user-info-item">
+              <span class="user-info-label">Email:</span>
+              <span class="user-info-value" id="userEmail"></span>
+            </div>
+            <div class="user-info-item">
+              <span class="user-info-label">Cuenta creada:</span>
+              <span class="user-info-value" id="userCreated"></span>
+            </div>
+            <div class="user-info-item">
+              <span class="user-info-label">Última conexión:</span>
+              <span class="user-info-value" id="userLastLogin"></span>
+            </div>
+          </div>
+          <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de zoom para imágenes -->
+    <div
+      class="image-zoom-modal"
+      id="imageZoomModal"
+      aria-hidden="true"
+      role="dialog"
+      aria-label="Zoom de imagen"
+    >
+      <div class="zoom-overlay" id="zoomOverlay" tabindex="-1"></div>
+      <div class="zoom-container">
+        <button class="zoom-close" id="zoomClose" aria-label="Cerrar zoom">
+          <i class="fas fa-times"></i>
+        </button>
+        <button class="zoom-prev" id="zoomPrev" aria-label="Imagen anterior">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="zoom-next" id="zoomNext" aria-label="Imagen siguiente">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        <img class="zoom-image" id="zoomImage" src="" alt="" />
+        <div
+          class="zoom-counter"
+          id="zoomCounter"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          1 / 1
+        </div>
+      </div>
+    </div>
+
+    <main class="main-content">
+      <div class="back-button-container">
+        <button
+          class="back-button"
+          onclick="history.back()"
+          aria-label="Volver a la página anterior"
+        >
+          <i class="fas fa-arrow-left"></i> Volver
+        </button>
+      </div>
+      <div
+        id="detalle"
+        class="detalle-producto"
+        tabindex="0"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <!-- El contenido del producto se cargará aquí dinámicamente con JavaScript -->
+      </div>
+
+      <!-- Nueva sección de Preguntas y Respuestas -->
+      <section
+        class="qa-section"
+        aria-label="Preguntas y respuestas del producto"
+      >
+        <h2>Preguntas y Respuestas</h2>
+        <div class="qa-form">
+          <h3>Pregúntale al vendedor</h3>
+          <textarea
+            id="questionInput"
+            placeholder="Escribe tu pregunta aquí..."
+            rows="3"
+            aria-label="Escribe tu pregunta"
+          ></textarea>
+          <button id="postQuestionBtn" class="primary-action-btn">
+            Preguntar
+          </button>
+        </div>
+        <div
+          class="qa-list"
+          id="qaList"
+          tabindex="0"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <!-- Las preguntas y respuestas se cargarán aquí -->
+          <div class="qa-item">
+            <p class="question">
+              <strong>Pregunta:</strong> ¿Tienen stock en color rosa?
+            </p>
+            <p class="answer">
+              <strong>Respuesta:</strong> Sí, tenemos stock disponible en color
+              rosa. ¡Esperamos tu compra!
+            </p>
+            <span class="qa-date">Hace 2 días</span>
+          </div>
+          <div class="qa-item">
+            <p class="question">
+              <strong>Pregunta:</strong> ¿Se puede retirar en persona?
+            </p>
+            <p class="answer">
+              <strong>Respuesta:</strong> Sí, puedes retirar en nuestro local de
+              Lunes a Viernes de 9 a 18hs.
+            </p>
+            <span class="qa-date">Hace 1 día</span>
+          </div>
+          <div class="qa-item">
+            <p class="question">
+              <strong>Pregunta:</strong> ¿Hacen envíos a todo el país?
+            </p>
+            <p class="answer">
+              <strong>Respuesta:</strong> Sí, realizamos envíos a todo el país a
+              través de Correo Argentino.
+            </p>
+            <span class="qa-date">Hace 5 horas</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <p>&copy; 2024 Accesorios. Todos los derechos reservados.</p>
+        <div class="social-links">
+          <a
+            href="https://www.instagram.com/yourprofile"
+            target="_blank"
+            aria-label="Instagram"
+            ><i class="fab fa-instagram"></i
+          ></a>
+          <a
+            href="https://www.facebook.com/yourprofile"
+            target="_blank"
+            aria-label="Facebook"
+            ><i class="fab fa-facebook-f"></i
+          ></a>
+          <a
+            href="https://www.tiktok.com/@yourprofile"
+            target="_blank"
+            aria-label="TikTok"
+            ><i class="fab fa-tiktok"></i
+          ></a>
+          <a
+            href="https://wa.me/5491166135708"
+            target="_blank"
+            aria-label="WhatsApp"
+            ><i class="fab fa-whatsapp"></i
+          ></a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../data.js"></script>
+    <script src="details.js"></script>
+    <script type="module" src="../firebase.js"></script>
+    <script src="../auth.js"></script>
+    
+    <!-- Quick Auth Fix -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Show modal when account button is clicked
+        document.querySelectorAll('.account-toggle').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.getElementById('authModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+          });
+        });
+        
+        // Close modal
+        document.querySelector('.auth-close').addEventListener('click', function() {
+          document.getElementById('authModal').style.display = 'none';
+          document.body.style.overflow = 'auto';
+        });
+        
+        // Tab switching
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+          tab.addEventListener('click', function() {
+            const tabType = this.dataset.tab;
+            
+            // Remove active from all tabs and forms
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            
+            // Add active to clicked tab
+            this.classList.add('active');
+            
+            // Show corresponding form
+            if (tabType === 'login') {
+              document.getElementById('loginForm').classList.add('active');
+            } else {
+              document.getElementById('registerForm').classList.add('active');
+            }
+          });
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('authModal').addEventListener('click', function(e) {
+          if (e.target === this) {
+            this.style.display = 'none';
+            document.body.style.overflow = 'auto';
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
