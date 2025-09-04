@@ -1234,18 +1234,20 @@ if (document.readyState === 'loading') {
   initializeDOM();
 }
 
+// Función para generar ID anónimo único
+function generateAnonymousId() {
+  return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+}
+
 // FUNCIONES DE LIKES
 async function toggleProductLike(productId, buttonElement) {
-  // Verificar si el usuario está logueado
+  // Generar ID único para usuarios anónimos
   const currentUser = window.authModal?.currentUser || window.authFunctions?.getCurrentUser?.();
-  if (!currentUser) {
-    if (window.authModal) {
-      window.authModal.showNotification('Debes iniciar sesión para dar like a los productos', 'error');
-      window.authModal.showModal();
-    } else {
-      alert('Debes iniciar sesión para dar like a los productos');
-    }
-    return;
+  const userId = currentUser?.uid || `anon_${localStorage.getItem('anonymousUserId') || generateAnonymousId()}`;
+  
+  // Guardar ID anónimo en localStorage si no existe
+  if (!currentUser && !localStorage.getItem('anonymousUserId')) {
+    localStorage.setItem('anonymousUserId', userId.replace('anon_', ''));
   }
 
   if (!window.firestoreManager) {
@@ -1254,15 +1256,15 @@ async function toggleProductLike(productId, buttonElement) {
   }
 
   try {
-    console.log('Toggling like for product:', productId, 'user:', currentUser.uid);
-    const hasLiked = await window.firestoreManager.hasUserLiked(productId, currentUser.uid);
+    console.log('Toggling like for product:', productId, 'user:', userId);
+    const hasLiked = await window.firestoreManager.hasUserLiked(productId, userId);
     
     if (hasLiked) {
-      await window.firestoreManager.unlikeProduct(productId, currentUser.uid);
+      await window.firestoreManager.unlikeProduct(productId, userId);
       buttonElement.classList.remove('liked');
       console.log('Removed like');
     } else {
-      await window.firestoreManager.likeProduct(productId, currentUser.uid);
+      await window.firestoreManager.likeProduct(productId, userId);
       buttonElement.classList.add('liked');
       console.log('Added like');
     }
@@ -1295,8 +1297,10 @@ async function loadProductLikeData(productId) {
     
     // Verificar si el usuario actual dio like
     const currentUser = window.authModal?.currentUser || window.authFunctions?.getCurrentUser?.();
-    if (currentUser) {
-      const hasLiked = await window.firestoreManager.hasUserLiked(productId, currentUser.uid);      
+    const userId = currentUser?.uid || `anon_${localStorage.getItem('anonymousUserId') || ''}`;
+    
+    if (userId && userId !== 'anon_') {
+      const hasLiked = await window.firestoreManager.hasUserLiked(productId, userId);
       const likeContainer = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
       if (likeContainer) {
         if (hasLiked) {
@@ -1334,5 +1338,28 @@ window.addEventListener('load', function() {
     setTimeout(() => {
       applyFilters(currentPage);
     }, 100);
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.like-btn')) {
+    const button = e.target.closest('.like-btn');
+    const productId = button.dataset.productId;
+    const userId = window.authModal?.currentUser?.uid;
+
+    if (!userId) {
+      alert('Debes iniciar sesión para dar like.');
+      return;
+    }
+
+    if (button.classList.contains('liked')) {
+      window.firestoreManager.removeLike(userId, productId).then(() => {
+        button.classList.remove('liked');
+      });
+    } else {
+      window.firestoreManager.addLike(userId, productId).then(() => {
+        button.classList.add('liked');
+      });
+    }
   }
 });

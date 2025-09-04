@@ -2,36 +2,62 @@
 // Global functions for managing user interactions
 
 // Like/Unlike product function
-window.toggleProductLike = function(productId) {
+window.toggleProductLike = async function(productId) {
   const user = window.authFunctions?.getCurrentUser?.() || 
                (window.authModal?.currentUser) || null;
-  
+
   if (!user) {
     window.authModal?.showModal();
     return false;
   }
-  
-  const likesKey = `likes_${user.uid}`;
-  let userLikes = JSON.parse(localStorage.getItem(likesKey)) || [];
-  
-  const isLiked = userLikes.includes(productId);
-  
-  if (isLiked) {
-    userLikes = userLikes.filter(id => id !== productId);
-    localStorage.setItem(likesKey, JSON.stringify(userLikes));
-    
+
+  const userId = user.uid;
+
+  if (!window.firestoreManager) {
+    console.error('Firestore manager no está disponible');
+    return false;
+  }
+
+  try {
+    const likeBtn = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
+    const likeCountElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
+    const currentLikes = parseInt(likeCountElement?.textContent || '0', 10);
+
+    const hasLiked = await window.firestoreManager.hasUserLiked(productId, userId);
+
+    if (hasLiked) {
+      await window.firestoreManager.unlikeProduct(productId, userId);
+      likeBtn?.classList.remove('active');
+      likeBtn?.setAttribute('title', 'Agregar a favoritos');
+      if (likeCountElement) {
+        likeCountElement.textContent = Math.max(0, currentLikes - 1);
+      }
+      if (window.authModal) {
+        window.authModal.showNotification('Eliminado de favoritos', 'info');
+      }
+    } else {
+      const userData = {
+        username: user.displayName || 'Usuario',
+        email: user.email,
+        profileImage: user.photoURL || '/img-galery/user-profile.png'
+      };
+      await window.firestoreManager.likeProduct(productId, userId, userData);
+      likeBtn?.classList.add('active');
+      likeBtn?.setAttribute('title', 'Quitar de favoritos');
+      if (likeCountElement) {
+        likeCountElement.textContent = currentLikes + 1;
+      }
+      if (window.authModal) {
+        window.authModal.showNotification('Agregado a favoritos ❤️', 'success');
+      }
+    }
+    return !hasLiked;
+  } catch (error) {
+    console.error('Error al alternar el like del producto:', error);
     if (window.authModal) {
-      window.authModal.showNotification('Eliminado de favoritos', 'info');
+      window.authModal.showNotification('Error al procesar el like', 'error');
     }
     return false;
-  } else {
-    userLikes.push(productId);
-    localStorage.setItem(likesKey, JSON.stringify(userLikes));
-    
-    if (window.authModal) {
-      window.authModal.showNotification('Agregado a favoritos ❤️', 'success');
-    }
-    return true;
   }
 };
 

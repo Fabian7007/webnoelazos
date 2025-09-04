@@ -1109,22 +1109,21 @@ class AuthModal {
   
   updateLikesDisplay() {
     if (!this.currentUser) return;
-    
+  
     const userLikes = JSON.parse(localStorage.getItem(`likes_${this.currentUser.uid}`)) || [];
     const likesGrid = document.getElementById('likesGrid');
     const likesCount = document.getElementById('likesCount');
-    
+  
     if (likesCount) likesCount.textContent = userLikes.length;
-    
+  
     if (userLikes.length === 0) {
       likesGrid.innerHTML = '<p class="empty-state">No tienes productos en favoritos aún</p>';
       return;
     }
-    
-    // Assuming productos is available globally
-    if (typeof productos !== 'undefined') {
-      const likedProducts = productos.filter(p => userLikes.includes(p.id));
-      
+  
+    // Sincronizar con Firestore
+    window.firestoreManager.getLikes(this.currentUser.uid).then((likesFromFirestore) => {
+      const likedProducts = productos.filter(p => likesFromFirestore.includes(p.id));
       likesGrid.innerHTML = likedProducts.map(product => `
         <div class="product-card-mini" onclick="window.location.href='details/details.html?id=${product.id}'">
           <img src="${product.imagen}" alt="${product.nombre}">
@@ -1134,7 +1133,9 @@ class AuthModal {
           </div>
         </div>
       `).join('');
-    }
+    }).catch(error => {
+      console.error('Error fetching likes from Firestore:', error);
+    });
   }
   
   updateSavedDisplay() {

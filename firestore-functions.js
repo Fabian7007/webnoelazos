@@ -9,7 +9,8 @@ import {
   where, 
   getDocs,
   deleteDoc,
-  updateDoc
+  updateDoc,
+  increment
 } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 
 class FirestoreManager {
@@ -148,35 +149,34 @@ class FirestoreManager {
   }
 
   // Dar like a producto
-  async likeProduct(productId, userId) {
+  async likeProduct(productId, userId, userData) {
     try {
       console.log('Attempting to like product:', productId, 'by user:', userId);
-      
-      const likeRef = doc(this.db, 'likes', `${productId}_${userId}`);
+
+      const productRef = doc(this.db, 'products', productId);
+      const likeRef = doc(collection(productRef, 'likes'), userId);
+
+      // Agregar datos del usuario en la subcolección 'likes'
       await setDoc(likeRef, {
-        productId: productId,
         userId: userId,
+        username: userData.username,
+        email: userData.email,
+        profileImage: userData.profileImage || null,
         createdAt: new Date()
       });
-      
-      console.log('Like document created successfully');
-      
-      // Actualizar contador en el producto
-      const productRef = doc(this.db, 'products', productId);
-      const productSnap = await getDoc(productRef);
-      if (productSnap.exists()) {
-        const currentLikes = Number(productSnap.data().likesCount) || 0;
-        await updateDoc(productRef, {
-          likesCount: currentLikes + 1,
-          updatedAt: new Date()
-        });
-        console.log('Product likes count updated to:', currentLikes + 1);
-      }
-      
+
+      console.log('Like document created successfully in subcollection');
+
+      // Incrementar contador de likes en el producto
+      await updateDoc(productRef, {
+        likesCount: increment(1),
+        updatedAt: new Date()
+      });
+
+      console.log('Product likes count incremented');
       return true;
     } catch (error) {
       console.error('Error liking product:', error);
-      console.error('Error details:', error.message);
       throw error;
     }
   }
@@ -185,28 +185,25 @@ class FirestoreManager {
   async unlikeProduct(productId, userId) {
     try {
       console.log('Attempting to unlike product:', productId, 'by user:', userId);
-      
-      const likeRef = doc(this.db, 'likes', `${productId}_${userId}`);
-      await deleteDoc(likeRef);
-      
-      console.log('Like document deleted successfully');
-      
-      // Actualizar contador en el producto
+
       const productRef = doc(this.db, 'products', productId);
-      const productSnap = await getDoc(productRef);
-      if (productSnap.exists()) {
-        const currentLikes = Number(productSnap.data().likesCount) || 0;
-        await updateDoc(productRef, {
-          likesCount: Math.max(0, currentLikes - 1),
-          updatedAt: new Date()
-        });
-        console.log('Product likes count updated to:', Math.max(0, currentLikes - 1));
-      }
-      
+      const likeRef = doc(collection(productRef, 'likes'), userId);
+
+      // Eliminar el documento del usuario en la subcolección 'likes'
+      await deleteDoc(likeRef);
+
+      console.log('Like document deleted successfully from subcollection');
+
+      // Decrementar contador de likes en el producto
+      await updateDoc(productRef, {
+        likesCount: increment(-1),
+        updatedAt: new Date()
+      });
+
+      console.log('Product likes count decremented');
       return true;
     } catch (error) {
       console.error('Error unliking product:', error);
-      console.error('Error details:', error.message);
       throw error;
     }
   }
