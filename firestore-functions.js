@@ -26,7 +26,7 @@ class FirestoreManager {
         uid: uid,
         username: userData.username,
         email: userData.email,
-        profileImage: userData.profileImage,
+        profileImage: userData.profileImage || '/img-galery/user-profile.png',
         isGoogleUser: userData.isGoogleUser || false,
         createdAt: new Date(),
         updatedAt: new Date(),
