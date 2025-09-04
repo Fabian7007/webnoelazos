@@ -1241,13 +1241,18 @@ function generateAnonymousId() {
 
 // FUNCIONES DE LIKES
 async function toggleProductLike(productId, buttonElement) {
-  // Generar ID único para usuarios anónimos
+  // Obtener usuario actual (autenticado o anónimo)
   const currentUser = window.authModal?.currentUser || window.authFunctions?.getCurrentUser?.();
-  const userId = currentUser?.uid || `anon_${localStorage.getItem('anonymousUserId') || generateAnonymousId()}`;
+  let userId;
   
-  // Guardar ID anónimo en localStorage si no existe
-  if (!currentUser && !localStorage.getItem('anonymousUserId')) {
-    localStorage.setItem('anonymousUserId', userId.replace('anon_', ''));
+  if (currentUser && currentUser.uid) {
+    // Usuario autenticado (incluye Google)
+    userId = currentUser.uid;
+  } else {
+    // Usuario anónimo
+    const anonId = localStorage.getItem('anonymousUserId') || generateAnonymousId();
+    userId = `anon_${anonId}`;
+    localStorage.setItem('anonymousUserId', anonId);
   }
 
   if (!window.firestoreManager) {
@@ -1257,6 +1262,9 @@ async function toggleProductLike(productId, buttonElement) {
 
   try {
     console.log('Toggling like for product:', productId, 'user:', userId);
+    console.log('Current user object:', currentUser);
+    console.log('User UID:', currentUser?.uid);
+    
     const hasLiked = await window.firestoreManager.hasUserLiked(productId, userId);
     
     if (hasLiked) {
@@ -1297,9 +1305,18 @@ async function loadProductLikeData(productId) {
     
     // Verificar si el usuario actual dio like
     const currentUser = window.authModal?.currentUser || window.authFunctions?.getCurrentUser?.();
-    const userId = currentUser?.uid || `anon_${localStorage.getItem('anonymousUserId') || ''}`;
+    let userId;
     
-    if (userId && userId !== 'anon_') {
+    if (currentUser && currentUser.uid) {
+      userId = currentUser.uid;
+    } else {
+      const anonId = localStorage.getItem('anonymousUserId');
+      if (anonId) {
+        userId = `anon_${anonId}`;
+      }
+    }
+    
+    if (userId) {
       const hasLiked = await window.firestoreManager.hasUserLiked(productId, userId);
       const likeContainer = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
       if (likeContainer) {

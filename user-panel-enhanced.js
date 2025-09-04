@@ -6,12 +6,15 @@ window.toggleProductLike = async function(productId) {
   const user = window.authFunctions?.getCurrentUser?.() || 
                (window.authModal?.currentUser) || null;
 
-  if (!user) {
-    window.authModal?.showModal();
-    return false;
+  let userId;
+  if (user && user.uid) {
+    userId = user.uid;
+  } else {
+    // Usuario anónimo
+    const anonId = localStorage.getItem('anonymousUserId') || Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+    userId = `anon_${anonId}`;
+    localStorage.setItem('anonymousUserId', anonId);
   }
-
-  const userId = user.uid;
 
   if (!window.firestoreManager) {
     console.error('Firestore manager no está disponible');
@@ -19,39 +22,21 @@ window.toggleProductLike = async function(productId) {
   }
 
   try {
-    const likeBtn = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
-    const likeCountElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
-    const currentLikes = parseInt(likeCountElement?.textContent || '0', 10);
-
     const hasLiked = await window.firestoreManager.hasUserLiked(productId, userId);
 
     if (hasLiked) {
       await window.firestoreManager.unlikeProduct(productId, userId);
-      likeBtn?.classList.remove('active');
-      likeBtn?.setAttribute('title', 'Agregar a favoritos');
-      if (likeCountElement) {
-        likeCountElement.textContent = Math.max(0, currentLikes - 1);
-      }
       if (window.authModal) {
         window.authModal.showNotification('Eliminado de favoritos', 'info');
       }
+      return false;
     } else {
-      const userData = {
-        username: user.displayName || 'Usuario',
-        email: user.email,
-        profileImage: user.photoURL || '/img-galery/user-profile.png'
-      };
-      await window.firestoreManager.likeProduct(productId, userId, userData);
-      likeBtn?.classList.add('active');
-      likeBtn?.setAttribute('title', 'Quitar de favoritos');
-      if (likeCountElement) {
-        likeCountElement.textContent = currentLikes + 1;
-      }
+      await window.firestoreManager.likeProduct(productId, userId);
       if (window.authModal) {
         window.authModal.showNotification('Agregado a favoritos ❤️', 'success');
       }
+      return true;
     }
-    return !hasLiked;
   } catch (error) {
     console.error('Error al alternar el like del producto:', error);
     if (window.authModal) {
@@ -66,9 +51,16 @@ window.isProductLiked = function(productId) {
   const user = window.authFunctions?.getCurrentUser?.() || 
                (window.authModal?.currentUser) || null;
   
-  if (!user) return false;
+  let userId;
+  if (user && user.uid) {
+    userId = user.uid;
+  } else {
+    const anonId = localStorage.getItem('anonymousUserId');
+    if (!anonId) return false;
+    userId = `anon_${anonId}`;
+  }
   
-  const likesKey = `likes_${user.uid}`;
+  const likesKey = `likes_${userId}`;
   const userLikes = JSON.parse(localStorage.getItem(likesKey)) || [];
   return userLikes.includes(productId);
 };

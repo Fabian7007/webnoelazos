@@ -34,33 +34,7 @@ googleProvider.setCustomParameters({
 window.authFunctions = {
   signInWithEmail: (email, password) => signInWithEmailAndPassword(auth, email, password),
   signUpWithEmail: (email, password) => createUserWithEmailAndPassword(auth, email, password),
-  signInWithGoogle: async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      // Verificar si el usuario ya está registrado en Firestore
-      if (window.firestoreManager) {
-        const userExists = await window.firestoreManager.getUser(user.uid);
-        if (!userExists) {
-          // Registrar al usuario en Firestore
-          const userData = {
-            username: user.displayName || 'Usuario',
-            email: user.email,
-            profileImage: user.photoURL || '/img-galery/user-profile.png',
-            isGoogleUser: true
-          };
-          await window.firestoreManager.createUser(user.uid, userData);
-          console.log('Usuario registrado en Firestore:', userData);
-        }
-      }
-
-      return result;
-    } catch (error) {
-      console.error('Error al iniciar sesión con Google:', error);
-      throw error;
-    }
-  },
+  signInWithGoogle: () => signInWithPopup(auth, googleProvider),
   signInWithGoogleEmail: (email) => {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({
