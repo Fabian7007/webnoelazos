@@ -29,6 +29,10 @@
     />
     <link rel="stylesheet" href="content/content.css" />
     <link rel="stylesheet" href="auth.css" />
+    <link rel="stylesheet" href="user-dropdown.css" />
+    <link rel="stylesheet" href="user-panel-effects.css" />
+    <link rel="stylesheet" href="dark-theme.css" />
+    <link rel="stylesheet" href="admin-products.css" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/img-galery/logo.svg" />
@@ -213,18 +217,14 @@
           <div
             class="cart-toggle"
             id="cartToggle"
-            role="button"
-            tabindex="0"
-            aria-label="Abrir carrito de compras"
-            aria-expanded="false"
-            aria-controls="cartDropdown"
+            aria-label="Carrito de compras"
           >
             <img
               src="/img-galery/icon-carrito.svg"
               alt="Carrito"
               class="cart-icon"
             />
-            <span class="cart-count" id="cartCount" aria-live="polite">0</span>
+            <span class="cart-count" id="cartCount">0</span>
           </div>
         </div>
       </div>
@@ -263,13 +263,10 @@
         </div>
       </div>
 
-      <!-- Cart Dropdown -->
       <div
         class="cart-dropdown"
         id="cartDropdown"
-        role="dialog"
-        aria-label="Carrito de compras"
-        aria-hidden="true"
+        aria-label="Detalle del carrito"
       >
         <div class="cart-header">
           <h3>Carrito de Compras</h3>
@@ -277,10 +274,10 @@
             ×
           </button>
         </div>
-        <div class="cart-items" id="cartItems" role="list"></div>
+        <div class="cart-items" id="cartItems"></div>
         <div class="cart-summary">
-          <p>Total: $<span id="cartTotal" aria-live="polite">0</span></p>
-          <button class="checkout-btn" type="button">Finalizar Compra</button>
+          <p>Total: $<span id="cartTotal">0</span></p>
+          <button class="checkout-btn">Finalizar Compra</button>
         </div>
       </div>
     </header>
@@ -363,30 +360,82 @@
     <!-- Menu Overlay -->
     <div class="menu-overlay" id="menuOverlay" aria-hidden="true"></div>
 
+    <!-- User Dropdown Menu -->
+    <div id="userDropdown" class="user-dropdown" style="display: none">
+      <div class="user-dropdown-content">
+        <div class="dropdown-item" id="viewProfileBtn">
+          <img src="/img-galery/profile.svg" alt="" class="dropdown-icon" />
+          <span>Ver Perfil</span>
+        </div>
+        <div class="dropdown-item" id="viewNotificationsBtn">
+          <img src="/img-galery/bell.svg" alt="" class="dropdown-icon" />
+          <span>Notificaciones</span>
+        </div>
+        <div class="dropdown-item" id="themeToggleBtn">
+          <img src="/img-galery/moon.svg" alt="" class="dropdown-icon" />
+          <span>Tema Oscuro</span>
+        </div>
+        <div class="dropdown-item logout" id="logoutDropdownBtn">
+          <img src="/img-galery/logout.svg" alt="" class="dropdown-icon" />
+          <span>Cerrar Sesión</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Auth Modal -->
-    <div id="authModal" class="auth-modal" style="display: none;">
+    <div id="authModal" class="auth-modal" style="display: none">
       <div class="auth-modal-content">
-        <span class="auth-close">&times;</span>
-        <div class="auth-tabs">
-          <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
+        <button class="auth-close">
+          <img src="/img-galery/close.svg" alt="Cerrar" />
+        </button>
+        <div class="auth-tabs" id="authTabs">
+          <button class="auth-tab active" data-tab="login">
+            Iniciar Sesión
+          </button>
           <button class="auth-tab" data-tab="register">Registrarse</button>
         </div>
-        
+
+        <div class="user-tabs" id="userTabs" style="display: none">
+          <button class="user-tab active" data-tab="profile"><img src="/img-galery/profile.svg" alt="" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;" /> Perfil</button>
+          <button class="user-tab" data-tab="stats"><img src="/img-galery/stats.svg" alt="" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;" /> Stats</button>
+          <button class="user-tab" data-tab="likes"><img src="/img-galery/heartprofile.svg" alt="" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;" /> Likes</button>
+          <button class="user-tab" data-tab="settings"><img src="/img-galery/settings.svg" alt="" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;" /> Config</button>
+        </div>
+
         <div id="loginForm" class="auth-form active">
           <h3>Iniciar Sesión</h3>
           <div class="input-group">
-            <input type="text" id="loginEmail" placeholder="Correo electrónico o nombre de usuario" required>
+            <input
+              type="text"
+              id="loginEmail"
+              placeholder="Correo electrónico o nombre de usuario"
+              required
+            />
           </div>
           <div class="input-group">
-            <input type="password" id="loginPassword" placeholder="Contraseña" required>
+            <div class="password-input-container">
+              <input
+                type="password"
+                id="loginPassword"
+                placeholder="Contraseña"
+                required
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                data-target="loginPassword"
+              >
+                <img src="/img-galery/ojos.svg" alt="Mostrar contraseña" />
+              </button>
+            </div>
           </div>
           <button id="loginBtn" class="auth-btn">Iniciar Sesión</button>
           <div class="forgot-password">
             <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
           </div>
-          <div class="auth-divider">o</div>
+          <div class="auth-divider">- o -</div>
           <button id="googleLoginBtn" class="google-btn">
-            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjY0IDkuMjA0NTVDMTcuNjQgOC41NjY0MSAxNy41ODI3IDcuOTUyNzMgMTcuNDc2NCA3LjM2MzY0SDlWMTAuODQ1SDE0LjA0MzZDMTMuODQgMTEuOTcgMTMuMjU0NSAxMi45MjMgMTIuMzYzNiAxMy41NjE0VjE1LjgxOTFIMTUuMTA5MUMxNi42NTQ1IDE0LjQyMjcgMTcuNjQgMTIuMDMxOCAxNy42NCA5LjIwNDU1WiIgZmlsbD0iIzQyODVGNCIvPgo8cGF0aCBkPSJNOSAxOEM5IDEzLjUgMTEuNSAxMSAxNiAxMUMxNi41IDExIDE3IDExLjUgMTcgMTJDMTcgMTIuNSAxNi41IDEzIDE2IDEzSDlWMThaIiBmaWxsPSIjMzRBODUzIi8+CjxwYXRoIGQ9Ik05IDE4QzkgMTMuNSAxMS41IDExIDE2IDExQzE2LjUgMTEgMTcgMTEuNSAxNyAxMkMxNyAxMi41IDE2LjUgMTMgMTYgMTNIOVYxOFoiIGZpbGw9IiNGQkJDMDQiLz4KPHN2Zz4K" alt="Google">
+            <img src="/img-galery/Google.png" alt="Google" />
             Continuar con Google
           </button>
         </div>
@@ -395,51 +444,117 @@
           <h3>Crear Cuenta</h3>
           <div class="input-row">
             <div class="input-group half">
-              <input type="text" id="registerUsername" placeholder="Usuario (máx. 15)" maxlength="15" required>
+              <input
+                type="text"
+                id="registerUsername"
+                placeholder="Usuario (máx. 15)"
+                maxlength="15"
+                required
+              />
             </div>
             <div class="input-group half">
-              <input type="email" id="registerEmail" placeholder="Email" required>
+              <input
+                type="email"
+                id="registerEmail"
+                placeholder="Email"
+                required
+              />
             </div>
           </div>
           <div class="input-row">
             <div class="input-group half">
-              <input type="password" id="registerPassword" placeholder="Contraseña (mín. 6)" required>
+              <div class="password-input-container">
+                <input
+                  type="password"
+                  id="registerPassword"
+                  placeholder="Contraseña (mín. 6)"
+                  required
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  data-target="registerPassword"
+                >
+                  <img src="/img-galery/ojos.svg" alt="Mostrar contraseña" />
+                </button>
+              </div>
               <div class="password-strength">
-                <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                <div
+                  class="password-strength-bar"
+                  id="passwordStrengthBar"
+                ></div>
               </div>
             </div>
             <div class="input-group half">
-              <input type="password" id="confirmPassword" placeholder="Repetir contraseña" required>
+              <div class="password-input-container">
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  placeholder="Repetir contraseña"
+                  required
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  data-target="confirmPassword"
+                >
+                  <img src="/img-galery/ojos.svg" alt="Mostrar contraseña" />
+                </button>
+              </div>
             </div>
           </div>
           <div class="input-group">
             <label class="profile-image-label">Foto de perfil</label>
-            <input type="file" id="profileImage" accept="image/*" class="profile-image-input" placeholder="Foto (opcional)">
+            <input
+              type="file"
+              id="profileImage"
+              accept="image/*"
+              class="profile-image-input"
+              placeholder="Foto (opcional)"
+            />
           </div>
           <div class="captcha-container compact">
+            <div class="captcha-question">Escribe lo que ves:</div>
             <div class="captcha-row">
               <canvas id="captchaCanvas" width="100" height="30"></canvas>
               <button type="button" id="refreshCaptcha" class="refresh-captcha">
-                <img src="/img-galery/reset.svg" alt="Regenerar" width="14" height="14">
+                <img
+                  src="/img-galery/reset.svg"
+                  alt="Regenerar"
+                  width="14"
+                  height="14"
+                />
               </button>
-              <input type="text" id="captchaInput" class="captcha-input" placeholder="Números" maxlength="5" required>
+              <input
+                type="text"
+                id="captchaInput"
+                class="captcha-input"
+                placeholder="Números"
+                maxlength="5"
+                required
+              />
             </div>
           </div>
           <button id="registerBtn" class="auth-btn">Crear Cuenta</button>
         </div>
 
-        <div id="userProfile" class="user-profile" style="display: none;">
+        <div id="userProfile" class="user-profile" style="display: none">
           <h3>Mi Perfil</h3>
           <div class="profile-header">
             <div class="profile-picture-container">
-              <img id="userProfilePic" class="profile-picture" src="" alt="Foto de perfil">
+              <img
+                id="userProfilePic"
+                class="profile-picture"
+                src=""
+                alt="Foto de perfil"
+              />
+              <div class="status-indicator" id="userStatusIndicator"></div>
             </div>
             <div class="profile-name">
               <h4 id="userDisplayNameHeader"></h4>
             </div>
           </div>
           <div class="user-info">
-
             <div class="user-info-item">
               <span class="user-info-label">Email:</span>
               <span class="user-info-value" id="userEmail"></span>
@@ -452,17 +567,164 @@
               <span class="user-info-label">Última conexión:</span>
               <span class="user-info-value" id="userLastLogin"></span>
             </div>
-            <div class="user-info-item" id="tempPasswordItem" style="display: none;">
+            <div class="user-info-item">
+              <span class="user-info-label">Rango:</span>
+              <span class="user-info-value" id="userRole"></span>
+            </div>
+            <div
+              class="user-info-item"
+              id="tempPasswordItem"
+              style="display: none"
+            >
               <span class="user-info-label">Contraseña temporal:</span>
               <span class="user-info-value" id="userTempPassword"></span>
             </div>
-            <div class="user-info-item" id="loginOptionsItem" style="display: none;">
+            <div
+              class="user-info-item"
+              id="loginOptionsItem"
+              style="display: none"
+            >
               <span class="user-info-label">Opciones de login:</span>
               <span class="user-info-value" id="userLoginOptions"></span>
             </div>
           </div>
-          <button id="editProfileBtn" class="auth-btn" style="margin-bottom: 0.5rem;">Editar Perfil</button>
+          <button
+            id="editProfileBtn"
+            class="auth-btn"
+            style="margin-bottom: 0.5rem"
+          >
+            Editar Perfil
+          </button>
           <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+        </div>
+
+        <div id="userLikes" class="user-content" style="display: none">
+          <h3>Mis Productos Favoritos</h3>
+          <div class="likes-header">
+            <div class="likes-count">
+              Total: <span id="likesCount">0</span> productos
+            </div>
+            <button class="clear-likes-btn" id="clearLikesBtn">
+              Limpiar Todo
+            </button>
+          </div>
+          <div class="likes-grid" id="likesGrid">
+            <p class="empty-state">No tienes productos en favoritos aún</p>
+          </div>
+        </div>
+
+        <div id="userStats" class="user-content" style="display: none">
+          <h3>Mis Estadísticas</h3>
+          <div class="stats-container">
+            <div class="stat-card">
+              <img src="/img-galery/heartprofile.svg" alt="" class="stat-icon" style="width: 2rem; height: 2rem;" />
+              <div class="stat-number" id="totalLikes">0</div>
+              <div class="stat-label">Productos Favoritos</div>
+            </div>
+            <div class="stat-card">
+              <img src="/img-galery/star.svg" alt="" class="stat-icon" style="width: 2rem; height: 2rem;" />
+              <div class="stat-number" id="userLevel">1</div>
+              <div class="stat-label">Nivel de Usuario</div>
+            </div>
+          </div>
+
+        </div>
+
+
+
+        <div id="userNotifications" class="user-content" style="display: none">
+          <h3>Notificaciones</h3>
+          <div class="notifications-container">
+            <div class="notification-filters">
+              <button class="notif-filter active" data-filter="all">
+                Todas
+              </button>
+              <button class="notif-filter" data-filter="system">Sistema</button>
+              <button class="notif-filter" data-filter="offers">Ofertas</button>
+            </div>
+            <div class="notifications-list" id="notificationsList">
+              <div class="notification-item unread">
+                <div class="notif-icon">🎉</div>
+                <div class="notif-content">
+                  <div class="notif-title">¡Bienvenido!</div>
+                  <div class="notif-text">Gracias por crear tu cuenta</div>
+                  <div class="notif-time">Hace 1 día</div>
+                </div>
+              </div>
+            </div>
+            <div class="notifications-actions">
+              <button class="clear-notif-btn" id="clearNotificationsBtn">
+                Limpiar Todo
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="userSettings" class="user-content" style="display: none">
+          <h3>Configuración de Cuenta</h3>
+          <div class="settings-container">
+            <div class="setting-group">
+              <h4>Notificaciones</h4>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="emailNotifications" checked />
+                  <span class="setting-toggle"></span>
+                  Notificaciones por email
+                </label>
+              </div>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="promotionNotifications" checked />
+                  <span class="setting-toggle"></span>
+                  Ofertas y promociones
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <h4>Apariencia</h4>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="animationsEnabled" checked />
+                  <span class="setting-toggle"></span>
+                  Animaciones mejoradas
+                </label>
+              </div>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="compactMode" />
+                  <span class="setting-toggle"></span>
+                  Modo compacto
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <h4>Privacidad</h4>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="profilePublic" />
+                  <span class="setting-toggle"></span>
+                  Perfil público
+                </label>
+              </div>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="activityVisible" />
+                  <span class="setting-toggle"></span>
+                  Mostrar actividad
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group danger-zone">
+              <h4>Zona Peligrosa</h4>
+              <button class="danger-btn" id="deleteAccountBtn">
+                Eliminar Cuenta
+              </button>
+              <p class="danger-text">Esta acción no se puede deshacer</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -532,6 +794,14 @@
           </div>
         </div>
       </section>
+
+      <!-- Admin Add Product Button -->
+      <div class="admin-controls" id="adminControls" style="display: none;">
+        <button id="addProductBtn" class="add-product-btn">
+          <span style="font-size: 16px; margin-right: 8px;">+</span>
+          Agregar Producto
+        </button>
+      </div>
 
       <!-- Filters Bar -->
       <div
@@ -677,20 +947,21 @@
     </footer>
 
     <!-- Scripts -->
+    <script type="module" src="firebase.js"></script>
+    <script type="module" src="firestore-functions.js"></script>
     <script src="data.js"></script>
     <script src="content/content.js"></script>
     <script src="script.js"></script>
-    <script type="module" src="firebase.js"></script>
     <script
       src="https://challenges.cloudflare.com/turnstile/v0/api.js"
       async
       defer
     ></script>
     <script src="turnstile-config.js"></script>
-
     <script src="auth.js"></script>
-    
-
+    <script src="user-panel-enhanced.js"></script>
+    <script src="user-panel-config.js"></script>
+    <script src="admin-products.js"></script>
 
     <!-- Enhanced Loading and Initialization Script -->
     <script>
@@ -784,10 +1055,13 @@
       const originalShowSection = window.showSection;
       window.showSection = function (seccion) {
         // Don't interfere if modal is open
-        if (document.getElementById('authModal') && document.getElementById('authModal').style.display === 'flex') {
+        if (
+          document.getElementById("authModal") &&
+          document.getElementById("authModal").style.display === "flex"
+        ) {
           return;
         }
-        
+
         safeExecute(() => {
           // Call original function if it exists
           if (
@@ -904,28 +1178,6 @@
         });
       }
     </script>
-    <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
-      // TODO: Add SDKs for Firebase products that you want to use
-      // https://firebase.google.com/docs/web/setup#available-libraries
 
-      // Your web app's Firebase configuration
-      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-      const firebaseConfig = {
-        apiKey: "AIzaSyB0_TF5t-v5JJBZ2hJ9RwnJUA1Fj49MK7w",
-        authDomain: "noe-lazos-56970.firebaseapp.com",
-        projectId: "noe-lazos-56970",
-        storageBucket: "noe-lazos-56970.firebasestorage.app",
-        messagingSenderId: "732377752795",
-        appId: "1:732377752795:web:1a23a88f50d73b710298fe",
-        measurementId: "G-R8J6YEM6T8",
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
-    </script>
   </body>
 </html>

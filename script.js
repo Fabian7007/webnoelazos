@@ -55,7 +55,6 @@ function closeAllDropdowns() {
   // Cerrar carrito
   if (elements.cartDropdown?.classList.contains('active')) {
     elements.cartDropdown.classList.remove('active');
-    document.body.classList.remove('no-scroll');
   }
 
   // Cerrar overlay
@@ -67,6 +66,9 @@ function closeAllDropdowns() {
   if (elements.menuToggle?.classList.contains('active')) {
     elements.menuToggle.classList.remove('active');
   }
+
+  // Remover clases de scroll bloqueado
+  document.body.classList.remove('menu-open', 'cart-open');
 }
 
 // Función para mostrar/ocultar botón de volver
@@ -218,7 +220,7 @@ function toggleMenu() {
   }
   if (cartDropdown?.classList.contains('active')) {
     cartDropdown.classList.remove('active');
-    document.body.classList.remove('no-scroll');
+    document.body.classList.remove('cart-open');
   }
 
   // Toggle menú
@@ -228,10 +230,12 @@ function toggleMenu() {
     mobileMenu?.classList.remove('active');
     menuToggle?.classList.remove('active');
     menuOverlay?.classList.remove('active');
+    document.body.classList.remove('menu-open');
   } else {
     mobileMenu?.classList.add('active');
     menuToggle?.classList.add('active');
     menuOverlay?.classList.add('active');
+    document.body.classList.add('menu-open');
   }
 }
 
@@ -247,10 +251,11 @@ function toggleSearch() {
   if (mobileMenu?.classList.contains('active')) {
     mobileMenu.classList.remove('active');
     menuToggle?.classList.remove('active');
+    document.body.classList.remove('menu-open');
   }
   if (cartDropdown?.classList.contains('active')) {
     cartDropdown.classList.remove('active');
-    document.body.classList.remove('no-scroll');
+    document.body.classList.remove('cart-open');
   }
 
   // Toggle búsqueda
@@ -279,6 +284,7 @@ function toggleCart() {
   if (mobileMenu?.classList.contains('active')) {
     mobileMenu.classList.remove('active');
     menuToggle?.classList.remove('active');
+    document.body.classList.remove('menu-open');
   }
   if (searchDropdown?.classList.contains('active')) {
     searchDropdown.classList.remove('active');
@@ -290,34 +296,59 @@ function toggleCart() {
   if (isCartActive) {
     cartDropdown?.classList.remove('active');
     menuOverlay?.classList.remove('active');
-    document.body.classList.remove('no-scroll');
+    document.body.classList.remove('cart-open');
   } else {
     cartDropdown?.classList.add('active');
     menuOverlay?.classList.add('active');
-    document.body.classList.add('no-scroll');
+    document.body.classList.add('cart-open');
     renderCart();
   }
 }
 
-// FUNCIÓN MEJORADA PARA CREAR PRODUCTOS CON TAGS
+// Enhanced product creation function integration
 function createProductElement(prod) {
+  // Always use this function, ignore enhanced version for now
   const div = document.createElement('div');
   div.className = 'product';
   if (prod.status) {
     div.classList.add(`product-status-${prod.status}`);
   }
   div.style.cursor = 'pointer';
+  // Check if user is admin
+  const currentUserData = window.authFunctions?.getCurrentUserData?.();
+  const isAdmin = currentUserData && currentUserData.role === 'administrador';
+
   div.innerHTML = `
     <div class="gray-square">
       <img src="${prod.imagen}" alt="${prod.nombre}" />
-      <button class="add-to-cart-btn" data-id="${prod.id}">
-        <img src="/img-galery/icon-carrito.svg" alt="Agregar al carrito" class="cart-btn-icon" />
-      </button>
+      <div class="product-overlay-actions">
+        <button class="add-to-cart-btn" data-id="${prod.id}">
+          <img src="/img-galery/icon-carrito.svg" alt="Agregar al carrito" class="cart-btn-icon" />
+        </button>
+      </div>
       <span class="added-text" style="display: none;">Agregado</span>
     </div>
     <div class="product-info">
       <h3>${prod.nombre}</h3>
       <p class="product-price">$${prod.precio.toLocaleString('es-AR')}</p>
+      <div class="like-container">
+        <button class="like-btn" data-product-id="${prod.id}" title="Me gusta">
+          <img src="/img-galery/heartproduct.svg" alt="Like" class="heart-icon" />
+        </button>
+        <span class="like-count" data-product-id="${prod.id}">${prod.likesCount || 0}</span>
+      </div>
+      <div class="product-actions">
+        ${isAdmin ? `
+          <div class="admin-actions">
+            <button class="edit-product-btn" data-product-id="${prod.id}" title="Editar producto">
+              <img src="/img-galery/edit.svg" alt="Editar" />
+            </button>
+            <button class="delete-product-btn" data-product-id="${prod.id}" title="Eliminar producto">
+              <img src="/img-galery/trash.svg" alt="Eliminar" />
+            </button>
+          </div>
+        ` : ''}
+      </div>
     </div>
   `;
 
@@ -491,7 +522,7 @@ function applyFilters(page = 1) {
     // Event listener para navegar a detalles
     if (prod.status !== 'agotado') {
       productElement.addEventListener('click', (e) => {
-        if (!e.target.closest('.add-to-cart-btn')) {
+        if (!e.target.closest('.add-to-cart-btn') && !e.target.closest('.like-btn') && !e.target.closest('.admin-actions')) {
           window.location.href = `details/details.html?id=${prod.id}`;
         }
       });
@@ -506,7 +537,38 @@ function applyFilters(page = 1) {
       });
     }
 
+    // Event listener para el contenedor de like
+    const likeContainer = productElement.querySelector('.like-container');
+    if (likeContainer) {
+      likeContainer.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const likeBtn = likeContainer.querySelector('.like-btn');
+        toggleProductLike(prod.id, likeBtn);
+      });
+    }
+
+    // Event listeners para botones de admin
+    const editBtn = productElement.querySelector('.edit-product-btn');
+    const deleteBtn = productElement.querySelector('.delete-product-btn');
+    
+    if (editBtn && window.editProduct) {
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.editProduct(prod.id);
+      });
+    }
+    
+    if (deleteBtn && window.deleteProduct) {
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.deleteProduct(prod.id);
+      });
+    }
+
     container.appendChild(productElement);
+    
+    // Load like count and status for this product
+    loadProductLikeData(prod.id);
   });
   
   // CREAR PAGINACIÓN si hay más de una página
@@ -823,7 +885,7 @@ function renderCart() {
       <img src="${item.imagen}" alt="${item.nombre}">
       <div class="cart-item-details">
         <h4>${item.nombre}</h4>
-        <p>${item.precio.toLocaleString('es-AR')} x ${item.quantity}</p>
+        <p>$${item.precio.toLocaleString('es-AR')} x ${item.quantity}</p>
         <div class="cart-item-quantity">
           <button class="quantity-btn" data-id="${item.id}" data-change="-1">-</button>
           <span>${item.quantity}</span>
@@ -839,21 +901,29 @@ function renderCart() {
 
   cartTotalSpan.textContent = total.toLocaleString('es-AR');
 
-  // Event listeners para botones del carrito
-  cartItemsContainer.querySelectorAll('.remove-item-btn').forEach(button => {
-    button.addEventListener('click', (e) => {
-      const productId = parseInt(e.currentTarget.dataset.id);
-      removeProductFromCart(productId);
+  // Usar setTimeout para asegurar que los elementos estén en el DOM
+  setTimeout(() => {
+    // Event listeners para botones del carrito
+    const removeButtons = cartItemsContainer.querySelectorAll('.remove-item-btn');
+    const quantityButtons = cartItemsContainer.querySelectorAll('.quantity-btn');
+    
+    removeButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const productId = parseInt(e.currentTarget.dataset.id);
+        removeProductFromCart(productId);
+      });
     });
-  });
 
-  cartItemsContainer.querySelectorAll('.quantity-btn').forEach(button => {
-    button.addEventListener('click', (e) => {
-      const productId = parseInt(e.currentTarget.dataset.id);
-      const change = parseInt(e.currentTarget.dataset.change);
-      updateCartItemQuantity(productId, change);
+    quantityButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const productId = parseInt(e.currentTarget.dataset.id);
+        const change = parseInt(e.currentTarget.dataset.change);
+        updateCartItemQuantity(productId, change);
+      });
     });
-  });
+  }, 0);
 }
 
 function sendWhatsAppMessage() {
@@ -867,10 +937,26 @@ function sendWhatsAppMessage() {
       message += `- ${item.nombre} (Cantidad: ${item.quantity})\n`;
     });
     const cartTotal = document.getElementById('cartTotal');
+    const totalAmount = cartTotal ? cartTotal.textContent : '0';
+    
     if (cartTotal) {
-      message += `\nTotal: $${cartTotal.textContent}\n`;
+      message += `\nTotal: $${totalAmount}\n`;
     }
     message += "\n¿Están disponibles?";
+    
+    // Add purchase to user history if user is logged in
+    if (window.addPurchaseToHistory && cart.length > 0) {
+      const purchaseProducts = cart.map(item => ({
+        id: item.id,
+        nombre: item.nombre,
+        precio: item.precio,
+        quantity: item.quantity,
+        imagen: item.imagen
+      }));
+      
+      const total = cart.reduce((sum, item) => sum + (item.precio * item.quantity), 0);
+      window.addPurchaseToHistory(purchaseProducts, total);
+    }
   }
 
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
@@ -1106,6 +1192,15 @@ function initializeApp() {
     }, 150);
   });
 
+  // Lógica para mostrar/ocultar el botón de "Agregar Producto" para administradores
+  const adminControls = document.getElementById('adminControls');
+  if (adminControls) {
+    const currentUserData = window.authFunctions?.getCurrentUserData?.();
+    const isAdmin = currentUserData && currentUserData.role === 'administrador';
+    adminControls.style.display = isAdmin ? 'block' : 'none';
+  }
+
+
   console.log('Aplicación inicializada correctamente');
 }
 
@@ -1139,8 +1234,86 @@ if (document.readyState === 'loading') {
   initializeDOM();
 }
 
+// FUNCIONES DE LIKES
+async function toggleProductLike(productId, buttonElement) {
+  // Verificar si el usuario está logueado
+  const currentUser = window.authModal?.currentUser || window.authFunctions?.getCurrentUser?.();
+  if (!currentUser) {
+    if (window.authModal) {
+      window.authModal.showNotification('Debes iniciar sesión para dar like a los productos', 'error');
+      window.authModal.showModal();
+    } else {
+      alert('Debes iniciar sesión para dar like a los productos');
+    }
+    return;
+  }
+
+  if (!window.firestoreManager) {
+    console.error('Firestore manager not available');
+    return;
+  }
+
+  try {
+    console.log('Toggling like for product:', productId, 'user:', currentUser.uid);
+    const hasLiked = await window.firestoreManager.hasUserLiked(productId, currentUser.uid);
+    
+    if (hasLiked) {
+      await window.firestoreManager.unlikeProduct(productId, currentUser.uid);
+      buttonElement.classList.remove('liked');
+      console.log('Removed like');
+    } else {
+      await window.firestoreManager.likeProduct(productId, currentUser.uid);
+      buttonElement.classList.add('liked');
+      console.log('Added like');
+    }
+    
+    // Actualizar contador inmediatamente
+    setTimeout(() => loadProductLikeData(productId), 100);
+    
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    if (window.authModal) {
+      window.authModal.showNotification('Error al procesar like', 'error');
+    }
+  }
+}
+
+async function loadProductLikeData(productId) {
+  if (!window.firestoreManager) {
+    console.log('Firestore manager not available for product:', productId);
+    return;
+  }
+  
+  try {
+    // Cargar contador de likes
+    const likeCount = await window.firestoreManager.getProductLikes(productId);
+    const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
+    if (countElement) {
+      countElement.textContent = likeCount;
+      console.log(`Loaded ${likeCount} likes for product ${productId}`);
+    }
+    
+    // Verificar si el usuario actual dio like
+    const currentUser = window.authModal?.currentUser || window.authFunctions?.getCurrentUser?.();
+    if (currentUser) {
+      const hasLiked = await window.firestoreManager.hasUserLiked(productId, currentUser.uid);      
+      const likeContainer = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
+      if (likeContainer) {
+        if (hasLiked) {
+          likeContainer.classList.add('liked');
+        } else {
+          likeContainer.classList.remove('liked');
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error loading like data for product', productId, ':', error);
+  }
+}
+
 // Función global para exponer showSection (necesaria para el HTML)
 window.showSection = showSection;
+window.applyFilters = applyFilters;
 
 // Limpiar funciones duplicadas del HTML
 window.addEventListener('load', function() {

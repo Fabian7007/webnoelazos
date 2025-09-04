@@ -20,21 +20,26 @@ function closeAllDropdowns() {
   const searchDropdown = document.getElementById('searchDropdown');
   const cartDropdown = document.getElementById('cartDropdown');
   const menuOverlay = document.getElementById('menuOverlay');
+  const menuToggle = document.getElementById('menuToggle');
 
   if (mobileMenu && mobileMenu.classList.contains('active')) {
     mobileMenu.classList.remove('active');
-    document.getElementById('menuToggle').classList.remove('active');
   }
   if (searchDropdown && searchDropdown.classList.contains('active')) {
     searchDropdown.classList.remove('active');
   }
   if (cartDropdown && cartDropdown.classList.contains('active')) {
     cartDropdown.classList.remove('active');
-    document.body.classList.remove('no-scroll');
   }
   if (menuOverlay && menuOverlay.classList.contains('active')) {
     menuOverlay.classList.remove('active');
   }
+  if (menuToggle && menuToggle.classList.contains('active')) {
+    menuToggle.classList.remove('active');
+  }
+  
+  // Remover clases de scroll bloqueado
+  document.body.classList.remove('menu-open', 'cart-open');
 }
 
 // Función para alternar el menú mobile
@@ -45,17 +50,29 @@ function toggleMenu() {
   const searchDropdown = document.getElementById('searchDropdown');
   const cartDropdown = document.getElementById('cartDropdown');
 
+  // Cerrar otros dropdowns
   if (searchDropdown && searchDropdown.classList.contains('active')) {
     searchDropdown.classList.remove('active');
   }
   if (cartDropdown && cartDropdown.classList.contains('active')) {
     cartDropdown.classList.remove('active');
-    document.body.classList.remove('no-scroll');
+    document.body.classList.remove('cart-open');
   }
 
-  mobileMenu.classList.toggle('active');
-  menuToggle.classList.toggle('active');
-  menuOverlay.classList.toggle('active');
+  // Toggle menú
+  const isMenuActive = mobileMenu && mobileMenu.classList.contains('active');
+
+  if (isMenuActive) {
+    mobileMenu.classList.remove('active');
+    menuToggle.classList.remove('active');
+    menuOverlay.classList.remove('active');
+    document.body.classList.remove('menu-open');
+  } else {
+    mobileMenu.classList.add('active');
+    menuToggle.classList.add('active');
+    menuOverlay.classList.add('active');
+    document.body.classList.add('menu-open');
+  }
 }
 
 // Función para alternar la búsqueda
@@ -65,21 +82,31 @@ function toggleSearch() {
   const menuOverlay = document.getElementById('menuOverlay');
   const mobileMenu = document.getElementById('mobileMenu');
   const cartDropdown = document.getElementById('cartDropdown');
+  const menuToggle = document.getElementById('menuToggle');
 
+  // Cerrar otros dropdowns
   if (mobileMenu && mobileMenu.classList.contains('active')) {
     mobileMenu.classList.remove('active');
-    document.getElementById('menuToggle').classList.remove('active');
+    menuToggle.classList.remove('active');
+    document.body.classList.remove('menu-open');
   }
   if (cartDropdown && cartDropdown.classList.contains('active')) {
     cartDropdown.classList.remove('active');
-    document.body.classList.remove('no-scroll');
+    document.body.classList.remove('cart-open');
   }
 
-  searchDropdown.classList.toggle('active');
-  menuOverlay.classList.toggle('active');
+  // Toggle búsqueda
+  const isSearchActive = searchDropdown && searchDropdown.classList.contains('active');
 
-  if (searchDropdown.classList.contains('active')) {
-    setTimeout(() => searchInput.focus(), 100);
+  if (isSearchActive) {
+    searchDropdown.classList.remove('active');
+    menuOverlay.classList.remove('active');
+  } else {
+    searchDropdown.classList.add('active');
+    menuOverlay.classList.add('active');
+    if (searchInput) {
+      setTimeout(() => searchInput.focus(), 100);
+    }
   }
 }
 
@@ -89,19 +116,31 @@ function toggleCart() {
   const menuOverlay = document.getElementById('menuOverlay');
   const mobileMenu = document.getElementById('mobileMenu');
   const searchDropdown = document.getElementById('searchDropdown');
+  const menuToggle = document.getElementById('menuToggle');
 
+  // Cerrar otros dropdowns
   if (mobileMenu && mobileMenu.classList.contains('active')) {
     mobileMenu.classList.remove('active');
-    document.getElementById('menuToggle').classList.remove('active');
+    menuToggle.classList.remove('active');
+    document.body.classList.remove('menu-open');
   }
   if (searchDropdown && searchDropdown.classList.contains('active')) {
     searchDropdown.classList.remove('active');
   }
 
-  cartDropdown.classList.toggle('active');
-  menuOverlay.classList.toggle('active');
-  document.body.classList.toggle('no-scroll');
-  renderCart();
+  // Toggle carrito
+  const isCartActive = cartDropdown && cartDropdown.classList.contains('active');
+
+  if (isCartActive) {
+    cartDropdown.classList.remove('active');
+    menuOverlay.classList.remove('active');
+    document.body.classList.remove('cart-open');
+  } else {
+    cartDropdown.classList.add('active');
+    menuOverlay.classList.add('active');
+    document.body.classList.add('cart-open');
+    renderCart();
+  }
 }
 
 // Función para cambiar imagen principal

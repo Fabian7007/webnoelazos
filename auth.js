@@ -31,8 +31,21 @@ class AuthModal {
     this.modal = document.getElementById('authModal');
     if (this.modal) {
       this.bindEvents();
+      this.initPasswordToggles();
       this.checkAuthState();
+      this.initTheme();
       setTimeout(() => this.generateCaptcha(), 100);
+    }
+  }
+  
+  initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-theme');
+      const themeBtn = document.getElementById('themeToggleBtn');
+      if (themeBtn) {
+        themeBtn.innerHTML = '<img src="/img-galery/sun.svg" alt="" class="dropdown-icon" /><span>Tema Claro</span>';
+      }
     }
   }
 
@@ -49,6 +62,9 @@ class AuthModal {
   drawCaptcha() {
     const canvas = document.getElementById('captchaCanvas');
     if (!canvas) return;
+    
+    canvas.width = 100;
+    canvas.height = 30;
     
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
@@ -71,7 +87,7 @@ class AuthModal {
     }
     
     // Draw numbers
-    ctx.font = 'bold 20px Arial';
+    ctx.font = 'bold 16px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
@@ -95,8 +111,16 @@ class AuthModal {
 
   bindEvents() {
     // Account button click
-    document.querySelectorAll('.account-toggle').forEach(btn => {
-      btn.addEventListener('click', () => this.showModal());
+    const self = this;
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.account-toggle')) {
+        e.stopPropagation();
+        if (self.currentUser) {
+          self.toggleUserDropdown();
+        } else {
+          self.showModal();
+        }
+      }
     });
 
     // Close modal
@@ -114,6 +138,19 @@ class AuthModal {
     document.querySelectorAll('.auth-tab').forEach(tab => {
       tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
     });
+    
+    // User tab switching
+    document.querySelectorAll('.user-tab').forEach(tab => {
+      tab.addEventListener('click', () => this.switchUserTab(tab.dataset.tab));
+    });
+    
+    // Settings event listeners
+    this.bindSettingsEvents();
+    
+    // Likes management
+    this.bindLikesEvents();
+    
+
 
     // Username validation
     const usernameInput = document.getElementById('registerUsername');
@@ -138,6 +175,18 @@ class AuthModal {
         this.generateCaptcha();
       });
     }
+    
+    // Profile image validation
+    const profileImageInput = document.getElementById('profileImage');
+    if (profileImageInput) {
+      profileImageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file && file.size > 1024 * 1024) {
+          this.showNotification('La imagen debe ser menor a 1MB', 'error');
+          e.target.value = '';
+        }
+      });
+    }
 
     // Auth buttons
     const loginBtn = document.getElementById('loginBtn');
@@ -156,6 +205,119 @@ class AuthModal {
       e.preventDefault();
       this.showForgotPassword();
     });
+  }
+  
+  bindSettingsEvents() {
+    // Settings toggles
+    document.addEventListener('change', (e) => {
+      if (e.target.matches('#emailNotifications, #promotionNotifications, #animationsEnabled, #compactMode, #profilePublic, #activityVisible')) {
+        this.saveUserSettings();
+      }
+    });
+    
+    // Delete account button
+    const deleteBtn = document.getElementById('deleteAccountBtn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => this.confirmDeleteAccount());
+    }
+  }
+  
+  bindLikesEvents() {
+    // Clear likes button
+    const clearLikesBtn = document.getElementById('clearLikesBtn');
+    if (clearLikesBtn) {
+      clearLikesBtn.addEventListener('click', () => this.clearAllLikes());
+    }
+    
+    // Dropdown events
+    setTimeout(() => this.bindDropdownEvents(), 100);
+  }
+  
+  bindDropdownEvents() {
+    const self = this;
+    
+    // View profile button
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('#viewProfileBtn')) {
+        self.hideUserDropdown();
+        self.showModal();
+      }
+    });
+    
+    // Theme toggle button
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('#themeToggleBtn')) {
+        self.toggleTheme();
+      }
+    });
+    
+    // Logout button
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('#logoutDropdownBtn')) {
+        self.hideUserDropdown();
+        self.logout();
+      }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('userDropdown');
+      if (dropdown && !e.target.closest('.account-toggle') && !e.target.closest('.user-dropdown')) {
+        self.hideUserDropdown();
+      }
+    });
+  }
+  
+  toggleUserDropdown() {
+    console.log('Toggle dropdown called');
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) {
+      const isVisible = dropdown.style.display === 'block';
+      dropdown.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) {
+        dropdown.classList.add('show');
+      } else {
+        dropdown.classList.remove('show');
+      }
+    } else {
+      console.log('Dropdown not found');
+    }
+  }
+  
+  showUserDropdown() {
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) {
+      dropdown.style.display = 'block';
+      dropdown.classList.add('show');
+    }
+  }
+  
+  hideUserDropdown() {
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) {
+      dropdown.style.display = 'none';
+      dropdown.classList.remove('show');
+    }
+  }
+  
+  toggleTheme() {
+    const body = document.body;
+    const themeBtn = document.getElementById('themeToggleBtn');
+    const isDark = body.classList.contains('dark-theme');
+    
+    if (isDark) {
+      body.classList.remove('dark-theme');
+      if (themeBtn) {
+        themeBtn.innerHTML = '<img src="/img-galery/moon.svg" alt="" class="dropdown-icon" /><span>Tema Oscuro</span>';
+      }
+      localStorage.setItem('theme', 'light');
+    } else {
+      body.classList.add('dark-theme');
+      if (themeBtn) {
+        themeBtn.innerHTML = '<img src="/img-galery/sun.svg" alt="" class="dropdown-icon" /><span>Tema Claro</span>';
+      }
+      localStorage.setItem('theme', 'dark');
+    }
   }
 
   validateUsername(username) {
@@ -185,22 +347,35 @@ class AuthModal {
     else if (strength === 3) strengthBar.classList.add('strength-strong');
   }
 
+  initPasswordToggles() {
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.password-toggle')) {
+        const button = e.target.closest('.password-toggle');
+        const targetId = button.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        const img = button.querySelector('img');
+        
+        if (input && img) {
+          if (input.type === 'password') {
+            input.type = 'text';
+            img.src = '/img-galery/ojos_abiertos.svg';
+            img.alt = 'Ocultar contraseña';
+          } else {
+            input.type = 'password';
+            img.src = '/img-galery/ojos.svg';
+            img.alt = 'Mostrar contraseña';
+          }
+        }
+      }
+    });
+  }
+
   showModal() {
     this.modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     
-    // Aggressively stop all carousel activity
+    // Stop carousel activity
     window.carouselStopped = true;
-    
-    // Clear all possible intervals
-    for (let i = 1; i < 99999; i++) {
-      window.clearInterval(i);
-    }
-    
-    // Stop carousel functions
-    if (window.pauseCarousel) window.pauseCarousel();
-    if (window.stopCarousel) window.stopCarousel();
-    if (window.clearCarouselInterval) window.clearCarouselInterval();
     
     // If user is logged in, show profile directly
     if (this.currentUser) {
@@ -234,6 +409,37 @@ class AuthModal {
       setTimeout(() => this.generateCaptcha(), 100);
     }
   }
+  
+  switchUserTab(tab) {
+    // Hide all content including profile
+    document.getElementById('userProfile').style.display = 'none';
+    document.querySelectorAll('.user-content').forEach(c => c.style.display = 'none');
+    
+    // Remove active from all tabs
+    document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
+    
+    // Add active to clicked tab
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    
+    // Show corresponding content
+    if (tab === 'profile') {
+      document.getElementById('userProfile').style.display = 'block';
+    } else if (tab === 'stats') {
+      document.getElementById('userStats').style.display = 'block';
+      this.updateUserStats();
+    } else if (tab === 'likes') {
+      document.getElementById('userLikes').style.display = 'block';
+      this.updateLikesDisplay();
+    } else if (tab === 'saved') {
+      document.getElementById('userSaved').style.display = 'block';
+      this.updateSavedDisplay();
+    } else if (tab === 'settings') {
+      document.getElementById('userSettings').style.display = 'block';
+      this.loadUserSettings();
+    }
+  }
+  
+
 
   async login() {
     const emailOrUsername = document.getElementById('loginEmail').value;
@@ -375,21 +581,27 @@ class AuthModal {
       let profileImageUrl = null;
       
       if (profileImageFile) {
-        if (profileImageFile.size > 1024 * 1024) {
-          this.showNotification('La imagen debe ser menor a 1MB', 'error');
-          return;
-        }
         profileImageUrl = await this.convertToBase64(profileImageFile);
       }
       
-      // Store additional user data in localStorage (in production use Firestore)
+      // Store user data in Firestore
       const userData = {
         username: username,
         email: email,
-        profileImage: profileImageUrl,
-        createdAt: new Date().toISOString()
+        profileImage: profileImageUrl || '/img-galery/user-profile.png'
       };
-      localStorage.setItem(`user_${userCredential.user.uid}`, JSON.stringify(userData));
+      
+      // Save to Firestore
+      if (window.firestoreManager) {
+        await window.firestoreManager.createUser(userCredential.user.uid, userData);
+      }
+      
+      // Keep localStorage as backup
+      localStorage.setItem(`user_${userCredential.user.uid}`, JSON.stringify({
+        ...userData, // Corregido de .userData
+        role: 'usuario',
+        createdAt: new Date().toISOString()
+      }));
       
       // Store password for recovery (in production, use encrypted storage)
       localStorage.setItem(`password_${email}`, password);
@@ -518,13 +730,22 @@ class AuthModal {
     const userData = {
       username: username,
       email: user.email,
-      profileImage: profileImageUrl,
+      profileImage: profileImageUrl || '/img-galery/user-profile.png',
       isGoogleUser: true,
-      createdAt: new Date().toISOString(),
       lastProfileEdit: null
     };
     
-    localStorage.setItem(`user_${user.uid}`, JSON.stringify(userData));
+    // Save to Firestore
+    if (window.firestoreManager) {
+      await window.firestoreManager.createUser(user.uid, userData);
+    }
+    
+    // Keep localStorage as backup
+    localStorage.setItem(`user_${user.uid}`, JSON.stringify({
+      ...userData, // Corregido de .userData
+      role: 'usuario',
+      createdAt: new Date().toISOString()
+    }));
     
     // Remove setup form and restore tabs
     document.getElementById('googleSetup').remove();
@@ -556,76 +777,161 @@ class AuthModal {
   showEditProfile() {
     if (!this.currentUser) return;
     
+    // Cerrar el modal de usuario
+    this.hideModal();
+    
     const storedData = localStorage.getItem(`user_${this.currentUser.uid}`);
     const userData = storedData ? JSON.parse(storedData) : {};
-    
-    // Check if 15 minutes have passed since last edit
-    if (userData.lastProfileEdit) {
-      const lastEdit = new Date(userData.lastProfileEdit);
-      const now = new Date();
-      const timeDiff = (now - lastEdit) / (1000 * 60); // minutes
-      
-      if (timeDiff < 15) {
-        const remainingTime = Math.ceil(15 - timeDiff);
-        this.showNotification(`Puedes editar tu perfil en ${remainingTime} minutos`, 'error');
-        return;
-      }
-    }
-    
     const currentUsername = userData.username || this.currentUser.displayName || this.currentUser.email.split('@')[0];
+    const currentImage = userData.profileImage || this.currentUser.photoURL || '/img-galery/user-profile.png';
     
     const editHTML = `
-      <div id="editProfile" class="auth-form active">
-        <h3>Editar Perfil</h3>
-        <div class="input-group">
-          <input type="text" id="editUsername" placeholder="Nombre de usuario" maxlength="15" value="${currentUsername}" required>
-          <div class="input-hint">Solo letras, números y guiones bajos</div>
-        </div>
-        <div class="profile-setup">
-          <p style="font-weight: 600; margin-bottom: 0.75rem;">Cambiar foto de perfil:</p>
-          <div class="profile-options">
-            <label class="profile-option">
-              <input type="radio" name="editProfileOption" value="current" checked>
-              <img src="${userData.profileImage || this.currentUser.photoURL || '/img-galery/account.svg'}" class="user-profile-pic" alt="Foto actual">
-              <span>Mantener foto actual</span>
-            </label>
-            <label class="profile-option">
-              <input type="radio" name="editProfileOption" value="upload">
-              <span>📷 Subir nueva foto</span>
-            </label>
+      <div id="editProfile" class="edit-profile-form">
+        <div class="edit-profile-container">
+          <div class="edit-profile-header">
+            <h3>Editar Perfil</h3>
+            <button id="cancelEditProfile" class="edit-close-btn">×</button>
           </div>
-          <input type="file" id="editProfileImage" accept="image/*" style="display: none;">
+          
+          <div class="edit-profile-content">
+            <div class="profile-preview">
+              <img id="previewImage" class="profile-preview-img" src="${currentImage}" alt="Vista previa">
+              <div class="profile-preview-info">
+                <div class="profile-preview-name" id="previewName">${currentUsername}</div>
+                <div class="profile-preview-email">${this.currentUser.email}</div>
+              </div>
+            </div>
+            
+            <div class="edit-input-group">
+              <label>Nombre de usuario (máx. 20 caracteres)</label>
+              <input type="text" id="editUsername" maxlength="20" value="${currentUsername}" required>
+              <div class="character-count">0/20 caracteres</div>
+            </div>
+            
+            <div class="edit-input-group">
+              <label>Foto de perfil (máx. 1MB)</label>
+              <input type="file" id="editProfileImage" accept="image/*">
+              <div class="file-info" id="fileInfo">Ningún archivo seleccionado</div>
+            </div>
+            
+            <div class="edit-input-group">
+              <label>Cambiar contraseña</label>
+              <div class="password-toggle-container">
+                <input type="password" id="editPassword" placeholder="Nueva contraseña (opcional)">
+                <button type="button" class="edit-password-toggle" data-target="editPassword">
+                  <img src="/img-galery/ojos.svg" alt="Mostrar contraseña">
+                </button>
+              </div>
+            </div>
+            
+            <div class="edit-profile-actions">
+              <button id="saveEditProfile" class="edit-save-btn">Guardar Cambios</button>
+              <button id="cancelEditProfileAlt" class="edit-cancel-btn">Cancelar</button>
+            </div>
+          </div>
         </div>
-        <button id="saveEditProfile" class="auth-btn">Guardar Cambios</button>
-        <button id="cancelEditProfile" class="logout-btn">Cancelar</button>
       </div>
     `;
     
-    // Hide profile and show edit form
-    document.getElementById('userProfile').style.display = 'none';
-    document.querySelector('.auth-modal-content').insertAdjacentHTML('beforeend', editHTML);
+    document.body.insertAdjacentHTML('beforeend', editHTML);
+    document.body.style.overflow = 'hidden';
     
-    // Bind events
-    document.querySelector('input[value="upload"]').addEventListener('change', () => {
-      document.getElementById('editProfileImage').style.display = 'block';
+    // Preview de imagen
+    const editImageInput = document.getElementById('editProfileImage');
+    const previewImage = document.getElementById('previewImage');
+    const usernameInput = document.getElementById('editUsername');
+    const previewName = document.getElementById('previewName');
+    
+    editImageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 1024 * 1024) {
+          this.showNotification('La imagen debe ser menor a 1MB', 'error');
+          e.target.value = '';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
     });
     
-    document.querySelector('input[value="current"]').addEventListener('change', () => {
-      document.getElementById('editProfileImage').style.display = 'none';
+    usernameInput.addEventListener('input', (e) => {
+      const value = e.target.value;
+      previewName.textContent = value || 'Usuario';
+      
+      // Update character count
+      const charCount = document.querySelector('.character-count');
+      if (charCount) {
+        charCount.textContent = `${value.length}/20 caracteres`;
+        charCount.style.color = value.length > 15 ? '#ff6b9d' : '#6c757d';
+      }
     });
     
-    document.getElementById('saveEditProfile').addEventListener('click', () => {
-      this.saveEditProfile();
+    // File info display
+    editImageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const fileInfo = document.getElementById('fileInfo');
+      
+      if (file) {
+        if (file.size > 1024 * 1024) {
+          this.showNotification('La imagen debe ser menor a 1MB', 'error');
+          e.target.value = '';
+          fileInfo.textContent = 'Ningún archivo seleccionado';
+          fileInfo.style.color = '#6c757d';
+          return;
+        }
+        
+        const sizeKB = Math.round(file.size / 1024);
+        fileInfo.textContent = `${file.name} (${sizeKB}KB)`;
+        fileInfo.style.color = '#28a745';
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        fileInfo.textContent = 'Ningún archivo seleccionado';
+        fileInfo.style.color = '#6c757d';
+      }
     });
     
-    document.getElementById('cancelEditProfile').addEventListener('click', () => {
-      this.cancelEditProfile();
+    // Password toggle
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.edit-password-toggle')) {
+        const button = e.target.closest('.edit-password-toggle');
+        const targetId = button.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        const img = button.querySelector('img');
+        
+        if (input && img) {
+          if (input.type === 'password') {
+            input.type = 'text';
+            img.src = '/img-galery/ojos_abiertos.svg';
+          } else {
+            input.type = 'password';
+            img.src = '/img-galery/ojos.svg';
+          }
+        }
+      }
     });
+    
+    // Initialize character count
+    const charCount = document.querySelector('.character-count');
+    if (charCount) {
+      charCount.textContent = `${currentUsername.length}/20 caracteres`;
+    }
+    
+    document.getElementById('saveEditProfile').addEventListener('click', () => this.saveEditProfile());
+    document.getElementById('cancelEditProfile').addEventListener('click', () => this.cancelEditProfile());
+    document.getElementById('cancelEditProfileAlt').addEventListener('click', () => this.cancelEditProfile());
   }
   
   async saveEditProfile() {
     const username = document.getElementById('editUsername').value;
-    const profileOption = document.querySelector('input[name="editProfileOption"]:checked').value;
     
     if (!username) {
       this.showNotification('Por favor ingresa un nombre de usuario', 'error');
@@ -642,26 +948,30 @@ class AuthModal {
     const userData = storedData ? JSON.parse(storedData) : {};
     let profileImageUrl = userData.profileImage || this.currentUser.photoURL;
     
-    if (profileOption === 'upload') {
-      const profileImageFile = document.getElementById('editProfileImage').files[0];
-      if (profileImageFile) {
-        if (profileImageFile.size > 1024 * 1024) {
-          this.showNotification('La imagen debe ser menor a 1MB', 'error');
-          return;
-        }
-        profileImageUrl = await this.convertToBase64(profileImageFile);
-      } else {
-        this.showNotification('Por favor selecciona una imagen', 'error');
-        return;
+    const profileImageFile = document.getElementById('editProfileImage').files[0];
+    if (profileImageFile) {
+      profileImageUrl = await this.convertToBase64(profileImageFile);
+    }
+    
+    // Handle password change
+    const newPassword = document.getElementById('editPassword').value;
+    if (newPassword && newPassword.length >= 6) {
+      try {
+        await window.authFunctions.updatePassword(newPassword);
+        this.showNotification('Contraseña actualizada', 'success');
+      } catch (error) {
+        this.showNotification('Error al actualizar contraseña: ' + error.message, 'error');
       }
+    } else if (newPassword && newPassword.length < 6) {
+      this.showNotification('La contraseña debe tener al menos 6 caracteres', 'error');
+      return;
     }
     
     const updatedUserData = {
       ...userData,
       username: username,
       profileImage: profileImageUrl,
-      updatedAt: new Date().toISOString(),
-      lastProfileEdit: new Date().toISOString()
+      updatedAt: new Date().toISOString()
     };
     
     localStorage.setItem(`user_${this.currentUser.uid}`, JSON.stringify(updatedUserData));
@@ -674,7 +984,10 @@ class AuthModal {
   cancelEditProfile() {
     const editForm = document.getElementById('editProfile');
     if (editForm) editForm.remove();
-    document.getElementById('userProfile').style.display = 'block';
+    document.body.style.overflow = 'auto';
+    
+    // Reabrir el modal de usuario
+    this.showModal();
   }
   
   async showForgotPassword() {
@@ -692,9 +1005,12 @@ class AuthModal {
     }
     
     try {
+      // Store email for reset password page
+      localStorage.setItem('reset_email', email);
+      
       // Configure custom action URL
       const actionCodeSettings = {
-        url: window.location.origin + '/reset-password.html',
+        url: window.location.origin + '/reset-password.html?email=' + encodeURIComponent(email),
         handleCodeInApp: false
       };
       
@@ -725,6 +1041,9 @@ class AuthModal {
       window.authFunctions.onAuthStateChanged((user) => {
         this.currentUser = user;
         this.updateUI(user);
+        
+        // Update global reference
+        window.currentUser = user;
       });
     }
   }
@@ -741,15 +1060,208 @@ class AuthModal {
     });
   }
 
-  updateUI(user) {
+  updateUserStats() {
+    if (!this.currentUser) return;
+    
+    const userLikes = JSON.parse(localStorage.getItem(`likes_${this.currentUser.uid}`)) || [];
+    
+    // Calculate user level based on likes
+    const userLevel = Math.floor(userLikes.length / 5) + 1;
+    
+    // Update stats display
+    document.getElementById('totalLikes').textContent = userLikes.length;
+    document.getElementById('userLevel').textContent = userLevel;
+  }
+  
+  updateActivityTimeline() {
+    const timeline = document.getElementById('activityTimeline');
+    const activities = [];
+    
+    if (this.currentUser) {
+      activities.push({
+        title: '¡Bienvenido!',
+        date: 'Cuenta creada',
+        time: this.currentUser.metadata.creationTime
+      });
+      
+      if (this.currentUser.metadata.lastSignInTime !== this.currentUser.metadata.creationTime) {
+        activities.push({
+          title: 'Última conexión',
+          date: this.formatDate(this.currentUser.metadata.lastSignInTime),
+          time: this.currentUser.metadata.lastSignInTime
+        });
+      }
+    }
+    
+    // Sort by time (most recent first)
+    activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+    
+    timeline.innerHTML = activities.map(activity => `
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-title">${activity.title}</div>
+          <div class="timeline-date">${activity.date}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  updateLikesDisplay() {
+    if (!this.currentUser) return;
+    
+    const userLikes = JSON.parse(localStorage.getItem(`likes_${this.currentUser.uid}`)) || [];
+    const likesGrid = document.getElementById('likesGrid');
+    const likesCount = document.getElementById('likesCount');
+    
+    if (likesCount) likesCount.textContent = userLikes.length;
+    
+    if (userLikes.length === 0) {
+      likesGrid.innerHTML = '<p class="empty-state">No tienes productos en favoritos aún</p>';
+      return;
+    }
+    
+    // Assuming productos is available globally
+    if (typeof productos !== 'undefined') {
+      const likedProducts = productos.filter(p => userLikes.includes(p.id));
+      
+      likesGrid.innerHTML = likedProducts.map(product => `
+        <div class="product-card-mini" onclick="window.location.href='details/details.html?id=${product.id}'">
+          <img src="${product.imagen}" alt="${product.nombre}">
+          <div class="info">
+            <div class="name">${product.nombre}</div>
+            <div class="price">$${product.precio.toLocaleString('es-AR')}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+  
+  updateSavedDisplay() {
+    if (!this.currentUser) return;
+    
+    const userSaved = JSON.parse(localStorage.getItem(`saved_${this.currentUser.uid}`)) || [];
+    const savedGrid = document.getElementById('savedGrid');
+    
+    if (userSaved.length === 0) {
+      savedGrid.innerHTML = '<p class="empty-state">No tienes productos guardados aún</p>';
+      return;
+    }
+    
+    // Assuming productos is available globally
+    if (typeof productos !== 'undefined') {
+      const savedProducts = productos.filter(p => userSaved.includes(p.id));
+      
+      savedGrid.innerHTML = savedProducts.map(product => `
+        <div class="product-card-mini" onclick="window.location.href='details/details.html?id=${product.id}'">
+          <img src="${product.imagen}" alt="${product.nombre}">
+          <div class="info">
+            <div class="name">${product.nombre}</div>
+            <div class="price">$${product.precio.toLocaleString('es-AR')}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+  
+  loadUserSettings() {
+    if (!this.currentUser) return;
+    
+    const settings = JSON.parse(localStorage.getItem(`settings_${this.currentUser.uid}`)) || {
+      emailNotifications: true,
+      promotionNotifications: true,
+      animationsEnabled: true,
+      compactMode: false,
+      profilePublic: false,
+      activityVisible: false
+    };
+    
+    // Apply settings to checkboxes
+    Object.keys(settings).forEach(key => {
+      const checkbox = document.getElementById(key);
+      if (checkbox) {
+        checkbox.checked = settings[key];
+      }
+    });
+  }
+  
+  saveUserSettings() {
+    if (!this.currentUser) return;
+    
+    const settings = {
+      emailNotifications: document.getElementById('emailNotifications')?.checked || false,
+      promotionNotifications: document.getElementById('promotionNotifications')?.checked || false,
+      animationsEnabled: document.getElementById('animationsEnabled')?.checked || false,
+      compactMode: document.getElementById('compactMode')?.checked || false,
+      profilePublic: document.getElementById('profilePublic')?.checked || false,
+      activityVisible: document.getElementById('activityVisible')?.checked || false
+    };
+    
+    localStorage.setItem(`settings_${this.currentUser.uid}`, JSON.stringify(settings));
+    this.showNotification('Configuración guardada', 'success');
+  }
+  
+  clearAllLikes() {
+    if (!this.currentUser) return;
+    
+    if (confirm('¿Estás seguro de que quieres eliminar todos tus productos favoritos?')) {
+      localStorage.removeItem(`likes_${this.currentUser.uid}`);
+      this.updateLikesDisplay();
+      this.showNotification('Favoritos eliminados', 'info');
+    }
+  }
+  
+  confirmDeleteAccount() {
+    if (!this.currentUser) return;
+    
+    const confirmation = prompt('Para eliminar tu cuenta, escribe "ELIMINAR" (en mayúsculas):');
+    
+    if (confirmation === 'ELIMINAR') {
+      this.deleteUserAccount();
+    } else if (confirmation !== null) {
+      this.showNotification('Texto incorrecto. Cuenta no eliminada.', 'error');
+    }
+  }
+  
+  async deleteUserAccount() {
+    if (!this.currentUser) return;
+    
+    try {
+      // Clear all user data from localStorage
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.includes(this.currentUser.uid)) {
+          keysToRemove.push(key);
+        }
+      }
+      
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // Delete from Firebase Auth
+      await this.currentUser.delete();
+      
+      this.showNotification('Cuenta eliminada exitosamente', 'success');
+      this.hideModal();
+    } catch (error) {
+      this.showNotification('Error al eliminar la cuenta: ' + error.message, 'error');
+    }
+  }
+
+  async updateUI(user) {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     const userProfile = document.getElementById('userProfile');
     const authTabs = document.querySelector('.auth-tabs');
 
     if (user) {
-      // Hide login/register forms and tabs, show profile
-      if (authTabs) authTabs.style.display = 'none';
+      // Hide login/register forms and tabs, show user tabs and profile
+      const authTabsEl = document.getElementById('authTabs');
+      const userTabsEl = document.getElementById('userTabs');
+      
+      if (authTabsEl) authTabsEl.style.display = 'none';
+      if (userTabsEl) userTabsEl.style.display = 'flex';
+      
       if (loginForm) {
         loginForm.classList.remove('active');
         loginForm.style.display = 'none';
@@ -758,11 +1270,43 @@ class AuthModal {
         registerForm.classList.remove('active');
         registerForm.style.display = 'none';
       }
+      
+      // Hide all user content first
+      document.querySelectorAll('.user-content').forEach(c => c.style.display = 'none');
+      
+      // Show profile by default
       if (userProfile) userProfile.style.display = 'block';
       
-      // Get stored user data
+      // Set profile tab as active
+      document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
+      const profileTab = document.querySelector('[data-tab="profile"]');
+      if (profileTab) profileTab.classList.add('active');
+      
+      // Initialize user data
+      this.updateUserStats();
+      
+      // Get user data and check admin status
+      let userRole = 'usuario';
+      
+      // Check Firestore for admin status
+      if (window.firestoreManager) {
+        try {
+          const isAdmin = await window.firestoreManager.isAdmin(user.uid);
+          if (isAdmin) {
+            userRole = 'administrador';
+          }
+        } catch (error) {
+          console.error('Error checking admin status:', error);
+        }
+      }
+      
+      // Get other user data from localStorage
       const storedData = localStorage.getItem(`user_${user.uid}`);
       const userData = storedData ? JSON.parse(storedData) : {};
+      
+      // Update localStorage with correct role
+      userData.role = userRole;
+      localStorage.setItem(`user_${user.uid}`, JSON.stringify(userData));
       
       const userName = userData.username || user.displayName || user.email.split('@')[0];
       const profileImage = userData.profileImage || user.photoURL;
@@ -774,13 +1318,31 @@ class AuthModal {
       const profilePicEl = document.getElementById('userProfilePic');
       const tempPasswordEl = document.getElementById('userTempPassword');
       const tempPasswordItem = document.getElementById('tempPasswordItem');
+      const roleEl = document.getElementById('userRole');
       
       // Update profile header name
       const displayNameHeaderEl = document.getElementById('userDisplayNameHeader');
-      if (displayNameHeaderEl) displayNameHeaderEl.textContent = userName;
+      if (displayNameHeaderEl) {
+        if (userRole === 'administrador') {
+          displayNameHeaderEl.innerHTML = `<span class="admin-username">${userName}</span><img src="/img-galery/admin-verify.svg" alt="Verificado" class="admin-verify-icon">`;
+        } else {
+          displayNameHeaderEl.textContent = userName;
+          displayNameHeaderEl.className = '';
+        }
+      }
+      
+      // Update profile fields with actual data
       if (emailEl) emailEl.textContent = user.email;
       if (createdEl) createdEl.textContent = this.formatDate(user.metadata.creationTime);
       if (lastLoginEl) lastLoginEl.textContent = this.formatDate(user.metadata.lastSignInTime);
+      if (roleEl) {
+        roleEl.textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+        if (userRole === 'administrador') {
+          roleEl.className = 'user-info-value admin-role';
+        } else {
+          roleEl.className = 'user-info-value';
+        }
+      }
       
       // Hide temp password for all users
       if (tempPasswordItem) tempPasswordItem.style.display = 'none';
@@ -791,25 +1353,30 @@ class AuthModal {
       
       // Update profile picture
       if (profilePicEl) {
-        if (profileImage) {
-          profilePicEl.src = profileImage;
-          profilePicEl.style.display = 'block';
-        } else {
-          profilePicEl.style.display = 'none';
-        }
+        profilePicEl.src = profileImage || '/img-galery/user-profile.png';
+        profilePicEl.style.display = 'block';
+      }
+      
+      // Update status indicator
+      const statusIndicator = document.getElementById('userStatusIndicator');
+      if (statusIndicator) {
+        statusIndicator.className = 'status-indicator online';
+        statusIndicator.title = 'En línea';
       }
       
       // Update account icon with profile picture
       document.querySelectorAll('.account-toggle').forEach(btn => {
-        if (profileImage) {
-          btn.innerHTML = `<img src="${profileImage}" alt="Perfil" class="user-profile-pic">`;
-        } else {
-          btn.innerHTML = `<img src="/img-galery/account.svg" alt="Cuenta" class="account-icon" style="filter: hue-rotate(120deg) brightness(1.2);">`;
-        }
+        const imgSrc = profileImage || '/img-galery/user-profile.png';
+        btn.innerHTML = `<img src="${imgSrc}" alt="Perfil" class="user-profile-pic">`;
       });
     } else {
-      // Show login/register forms and tabs, hide profile
-      if (authTabs) authTabs.style.display = 'flex';
+      // Show login/register forms and tabs, hide user tabs and profile
+      const authTabsEl = document.getElementById('authTabs');
+      const userTabsEl = document.getElementById('userTabs');
+      
+      if (authTabsEl) authTabsEl.style.display = 'flex';
+      if (userTabsEl) userTabsEl.style.display = 'none';
+      
       if (loginForm) {
         loginForm.classList.add('active');
         loginForm.style.display = 'block';
@@ -819,6 +1386,9 @@ class AuthModal {
         registerForm.style.display = 'none';
       }
       if (userProfile) userProfile.style.display = 'none';
+      
+      // Hide all user content
+      document.querySelectorAll('.user-content').forEach(c => c.style.display = 'none');
       
       // Reset account icon
       document.querySelectorAll('.account-toggle').forEach(btn => {
@@ -830,5 +1400,5 @@ class AuthModal {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  new AuthModal();
+  window.authModal = new AuthModal();
 });

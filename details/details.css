@@ -491,7 +491,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1000;
+  z-index: 1001;
   display: none;
   background: rgba(0, 0, 0, 0.9);
   opacity: 0;

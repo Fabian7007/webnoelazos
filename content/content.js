@@ -3,10 +3,7 @@ class MinimalProductCarousel {
   constructor() {
     this.currentSlide = 0;
     this.slides = [];
-    this.autoSlideInterval = null;
     this.itemElements = []; // Almacenará los elementos del DOM del carrusel
-    this.autoSlideDelay = 4000; // 4 segundos
-    this.isPaused = false;
     this.isInitialized = false;
     this.isMobile = window.innerWidth <= 768;
     this.isTablet = window.innerWidth > 768 && window.innerWidth <= 1024;
@@ -40,7 +37,7 @@ class MinimalProductCarousel {
       if (typeof productos !== 'undefined' && productos.length > 0) {
         this.init();
       } else {
-        setTimeout(checkProducts, 100);
+        setTimeout(checkProducts, 200);
       }
     };
     checkProducts();
@@ -62,7 +59,6 @@ class MinimalProductCarousel {
     this.setupEventListeners();
     this.setupGlobalEventListeners();
     this.setupTouchEvents();
-    this.startAutoSlide(); // Start auto-slide here
     
     this.isInitialized = true;
     console.log('Carrusel minimalista inicializado exitosamente');
@@ -106,6 +102,7 @@ class MinimalProductCarousel {
     }
 
     trackElement.innerHTML = ''; // Limpiar solo una vez
+    this.itemElements = []; // Limpiar array de elementos
     const itemsToShow = this.getItemsToShow();
 
     for (let i = 0; i < itemsToShow; i++) {
@@ -122,7 +119,6 @@ class MinimalProductCarousel {
           <button class="quick-view-btn">Ver</button>
         </div>
         <div class="carousel-counter"></div>
-        <div class="main-image-loader"><div class="main-image-loader-bar"></div></div>
       `;
       trackElement.appendChild(item);
       this.itemElements.push(item);
@@ -130,7 +126,7 @@ class MinimalProductCarousel {
   }
 
   updateView() {
-    if (this.slides.length === 0) return;
+    if (this.slides.length === 0 || this.itemElements.length === 0) return;
 
     const itemsToShow = this.getItemsToShow();
     const centerIndex = Math.floor(itemsToShow / 2);
@@ -166,8 +162,6 @@ class MinimalProductCarousel {
       const viewDetailsBtn = item.querySelector('.view-details-btn');
       const quickViewBtn = item.querySelector('.quick-view-btn');
       const counter = item.querySelector('.carousel-counter');
-      const loaderContainer = item.querySelector('.main-image-loader');
-
       // Actualizar solo si es necesario para evitar reflows
       if (img.src !== product.imagen) {
         img.src = product.imagen;
@@ -185,9 +179,7 @@ class MinimalProductCarousel {
       viewDetailsBtn.dataset.productId = product.id;
       quickViewBtn.dataset.productId = product.id;
 
-      if (loaderContainer) {
-        loaderContainer.style.display = item.classList.contains('main') ? 'block' : 'none';
-      }
+
     });
   }
 
@@ -286,16 +278,10 @@ class MinimalProductCarousel {
       });
     }
 
-    // Pausar al pasar el mouse
+    // Eventos de mouse (sin auto-slide)
     const carouselContainer = document.querySelector('.minimal-carousel-container');
     if (carouselContainer) {
-      carouselContainer.addEventListener('mouseenter', () => {
-        this.pauseAutoSlide();
-      });
-      
-      carouselContainer.addEventListener('mouseleave', () => {
-        this.resumeAutoSlide();
-      });
+      // Eventos de mouse para efectos visuales si es necesario
     }
   }
 
@@ -330,17 +316,16 @@ class MinimalProductCarousel {
     
     // Recreate elements if device type changed
     if (wasMobile !== this.isMobile || wasTablet !== this.isTablet) {
-      this.renderCarouselItems();
-      this.resetAutoSlide();
+      const currentItemsToShow = this.getItemsToShow();
+      if (this.itemElements.length !== currentItemsToShow) {
+        this.createCarouselShell();
+      }
+      this.updateCurrentSlide();
     }
   }
 
   handleVisibilityChange() {
-    if (document.hidden) {
-      this.pauseAutoSlide();
-    } else if (this.isCarouselVisible()) {
-      this.resumeAutoSlide();
-    }
+    // Sin funcionalidad automática, no necesita hacer nada
   }
 
   handleKeydown(e) {
@@ -388,7 +373,6 @@ class MinimalProductCarousel {
     this.touchStartY = e.touches[0].clientY;
     this.touchCurrentX = this.touchStartX;
     this.isDragging = true;
-    this.pauseAutoSlide();
   }
 
   handleTouchMove(e) {
@@ -425,7 +409,6 @@ class MinimalProductCarousel {
     }
     
     this.isDragging = false;
-    this.resumeAutoSlide();
   }
 
   isCarouselVisible() {
@@ -441,7 +424,6 @@ class MinimalProductCarousel {
     if (index < 0 || index >= this.slides.length || this.isAnimating || this.slides.length === 0) return;
     
     this.isAnimating = true;
-    this.pauseAutoSlide();
     
     this.currentSlide = index;
     this.updateCurrentSlide();
@@ -461,10 +443,9 @@ class MinimalProductCarousel {
       setTimeout(() => mainItem.focus(), 50);
     }
 
-    // Resumir después de un breve delay
+    // Finalizar animación después de un breve delay
     setTimeout(() => {
       this.isAnimating = false;
-      this.resumeAutoSlide();
     }, 500);
   }
 
@@ -483,41 +464,9 @@ class MinimalProductCarousel {
   updateCurrentSlide() {
     this.updateView();
     this.updateIndicators();
-    this.syncImageLoader();
   }
 
-  syncImageLoader() {
-    const mainItem = document.querySelector('.minimal-carousel-item.main');
-    const mainLoaderBar = mainItem?.querySelector('.main-image-loader-bar');
-    const mainImage = mainItem?.querySelector('img');
 
-    if (mainLoaderBar && mainImage) {
-      mainLoaderBar.style.width = '0%';
-      mainLoaderBar.style.transition = 'none';
-      
-      // Forzar reflow
-      mainLoaderBar.offsetHeight;
-      
-      // Iniciar animación del loader
-      requestAnimationFrame(() => {
-        mainLoaderBar.style.transition = `width ${this.autoSlideDelay / 1000}s linear`;
-        mainLoaderBar.style.width = '100%';
-      });
-
-      // Manejar carga de imagen
-      if (mainImage.complete && mainImage.naturalHeight !== 0) {
-        // Imagen ya cargada
-        this.resetAutoSlide();
-      } else {
-        mainImage.onload = () => {
-          this.resetAutoSlide();
-        };
-        mainImage.onerror = () => {
-          this.resetAutoSlide();
-        };
-      }
-    }
-  }
 
   updateIndicators() {
     const indicators = document.querySelectorAll('.minimal-indicator');
@@ -532,57 +481,7 @@ class MinimalProductCarousel {
     window.location.href = `details/details.html?id=${productId}`;
   }
 
-  startAutoSlide() {
-    this.stopAutoSlide(); // Clear any existing intervals
 
-    if (!this.isCarouselVisible() || this.slides.length <= 1) return; // Only auto-slide if visible and enough slides
-
-    this.autoSlideInterval = setInterval(() => {
-      if (!this.isPaused && this.isCarouselVisible() && !this.isAnimating) {
-        this.nextSlide(); // Move to the next slide
-      }
-    }, this.autoSlideDelay);
-
-    // Ensure the loader animation starts for the main item
-    const mainLoaderBar = document.querySelector('.minimal-carousel-item.main .main-image-loader-bar');
-    if (mainLoaderBar) {
-      mainLoaderBar.style.transition = `width ${this.autoSlideDelay / 1000}s linear`;
-      mainLoaderBar.style.width = '100%'; // Animate the loader bar
-    }
-  }
-
-  stopAutoSlide() {
-    if (this.autoSlideInterval) {
-      clearInterval(this.autoSlideInterval);
-      this.autoSlideInterval = null;
-    }
-    
-    // Detener animación del loader
-    const mainLoaderBar = document.querySelector('.minimal-carousel-item.main .main-image-loader-bar');
-    if (mainLoaderBar) {
-      mainLoaderBar.style.animation = 'none';
-      mainLoaderBar.style.width = '0%';
-    }
-  }
-
-  pauseAutoSlide() {
-    this.isPaused = true;
-  }
-
-  resumeAutoSlide() {
-    if (!this.isCarouselVisible()) return;
-    this.isPaused = false;
-    if (!this.autoSlideInterval) {
-      this.startAutoSlide(); // Restart auto-slide if it was stopped
-    }
-  }
-
-  resetAutoSlide() {
-    this.stopAutoSlide();
-    if (!this.isPaused && this.isCarouselVisible()) {
-      this.startAutoSlide();
-    }
-  }
 
   handleSectionChange(newSection) {
     const carouselSection = document.getElementById('carousel-section');
@@ -590,10 +489,8 @@ class MinimalProductCarousel {
       if (newSection === 'inicio') {
         carouselSection.style.display = 'block';
         this.handleResize();
-        this.resumeAutoSlide();
       } else {
         carouselSection.style.display = 'none';
-        this.pauseAutoSlide();
       }
     }
   }
@@ -617,8 +514,6 @@ class MinimalProductCarousel {
   }
 
   destroy() {
-    this.stopAutoSlide();
-    
     // Remover event listeners globales
     window.removeEventListener('resize', this.handleResize);
     document.removeEventListener('visibilitychange', this.handleVisibilityChange);
@@ -630,8 +525,6 @@ class MinimalProductCarousel {
       carouselContainer.removeEventListener('touchstart', this.handleTouchStart);
       carouselContainer.removeEventListener('touchmove', this.handleTouchMove);
       carouselContainer.removeEventListener('touchend', this.handleTouchEnd);
-      carouselContainer.removeEventListener('mouseenter', () => this.pauseAutoSlide());
-      carouselContainer.removeEventListener('mouseleave', () => this.resumeAutoSlide());
     }
     
     this.isInitialized = false;
@@ -645,18 +538,13 @@ class MinimalProductCarousel {
       index: this.currentSlide,
       total: this.slides.length,
       product: currentProduct,
-      isPlaying: !this.isPaused && this.autoSlideInterval !== null
+      isPlaying: false // Siempre false ya que no hay auto-slide
     };
   }
 
   toggleAutoPlay() {
-    if (this.isPaused) {
-      this.resumeAutoSlide();
-      this.resetAutoSlide();
-    } else {
-      this.pauseAutoSlide();
-    }
-    return !this.isPaused;
+    // Sin funcionalidad automática, siempre retorna false
+    return false;
   }
 
   goToProductById(productId) {
@@ -666,6 +554,26 @@ class MinimalProductCarousel {
       return true;
     }
     return false;
+  }
+
+  renderProductCard(product) {
+    return `
+      <div class="product-card">
+        <img src="${product.imagen}" alt="${product.nombre}" class="product-image">
+        <div class="product-info">
+          <h4>${product.nombre}</h4>
+          <p>$${product.precio?.toLocaleString('es-AR') || '0'}</p>
+          <div class="product-actions">
+            <button class="like-btn" data-id="${product.id}">
+              <img src="/img-galery/heart-icon.svg" alt="Like" class="heart-icon">
+            </button>
+            <button class="add-to-cart-btn" data-id="${product.id}">
+              <img src="/img-galery/cart-icon.svg" alt="Añadir al carrito" class="cart-btn-icon">
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
   }
 }
 
@@ -831,7 +739,6 @@ window.carouselController = {
   next: () => minimalCarousel?.nextSlide(),
   prev: () => minimalCarousel?.prevSlide(),
   goTo: (index) => minimalCarousel?.goToSlide(index),
-  toggleAutoPlay: () => minimalCarousel?.toggleAutoPlay(),
   getCurrentInfo: () => minimalCarousel?.getCurrentSlideInfo(),
   goToProduct: (productId) => minimalCarousel?.goToProductById(productId)
 };
@@ -845,7 +752,7 @@ function debugMinimalCarousel() {
       totalSlides: info.total,
       currentProduct: info.product?.nombre,
       isPlaying: info.isPlaying,
-      isPaused: minimalCarousel.isPaused,
+
       isVisible: minimalCarousel.isCarouselVisible(),
       isMobile: minimalCarousel.isMobile,
       isTablet: minimalCarousel.isTablet,
@@ -865,10 +772,23 @@ function restartMinimalCarousel() {
   setTimeout(initializeMinimalCarousel, 500);
 }
 
+// Función para reinicializar cuando se cargan productos
+function reinitializeCarouselWithProducts() {
+  if (minimalCarousel && minimalCarousel.isInitialized) {
+    minimalCarousel.selectFeaturedProducts();
+    if (minimalCarousel.slides.length > 0) {
+      minimalCarousel.createCarouselElements();
+    }
+  } else {
+    initializeMinimalCarousel();
+  }
+}
+
 // Exportar funciones de debug para consola
 window.debugMinimalCarousel = debugMinimalCarousel;
 window.restartMinimalCarousel = restartMinimalCarousel;
 window.preloadCarouselImages = preloadCarouselImages;
+window.reinitializeCarouselWithProducts = reinitializeCarouselWithProducts;
 
 // Auto-precargar imágenes cuando el carrusel esté listo
 document.addEventListener('DOMContentLoaded', () => {
@@ -879,32 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 1000);
 });
 
-// Intersection Observer para optimización de rendimiento
-const carouselObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      // Carrusel visible, asegurar que funcione
-      if (minimalCarousel && !minimalCarousel.isPaused) {
-        minimalCarousel.resumeAutoSlide();
-      }
-    } else {
-      // Carrusel no visible, pausar para ahorrar recursos
-      if (minimalCarousel) {
-        minimalCarousel.pauseAutoSlide();
-      }
-    }
-  });
-}, {
-  threshold: 0.1 // 10% del carrusel debe ser visible
-});
 
-// Observar el carrusel cuando esté disponible
-setTimeout(() => {
-  const carouselElement = document.querySelector('.minimal-carousel-container');
-  if (carouselElement) {
-    carouselObserver.observe(carouselElement);
-  }
-}, 1000);
 
 // Función para manejar errores de carga de imagen
 function handleImageError(img, fallbackSrc = '/img-galery/placeholder.jpg') {

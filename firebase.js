@@ -1,5 +1,5 @@
 // Import Firebase modules
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, EmailAuthProvider, linkWithCredential, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -12,7 +12,18 @@ const firebaseConfig = {
   measurementId: "G-M1DT1LVBRX"
 };
 
-const app = initializeApp(firebaseConfig);
+// Check if Firebase app already exists
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (error) {
+  if (error.code === 'app/duplicate-app') {
+    // App already initialized, get the existing instance
+    app = getApp();
+  } else {
+    throw error;
+  }
+}
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -42,5 +53,9 @@ window.authFunctions = {
     }
     throw new Error('No user is currently signed in');
   },
-  sendPasswordResetEmail: (email) => sendPasswordResetEmail(auth, email)
+  sendPasswordResetEmail: (email, actionCodeSettings) => sendPasswordResetEmail(auth, email, actionCodeSettings),
+  getCurrentUser: () => auth.currentUser
 };
+
+// Export Firebase app instance
+window.firebaseApp = app;

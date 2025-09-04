@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="../styles.css" />
     <link rel="stylesheet" href="details.css" />
     <link rel="stylesheet" href="../auth.css" />
+    <link rel="stylesheet" href="../user-dropdown.css" />
+    <link rel="stylesheet" href="../user-panel-effects.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -154,10 +156,19 @@
     <!-- Auth Modal -->
     <div id="authModal" class="auth-modal" style="display: none;">
       <div class="auth-modal-content">
-        <span class="auth-close">&times;</span>
-        <div class="auth-tabs">
+        <button class="auth-close">
+          <img src="../img-galery/close.svg" alt="Cerrar">
+        </button>
+        <div class="auth-tabs" id="authTabs">
           <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
           <button class="auth-tab" data-tab="register">Registrarse</button>
+        </div>
+        
+        <div class="user-tabs" id="userTabs" style="display: none;">
+          <button class="user-tab active" data-tab="profile">👤 Perfil</button>
+          <button class="user-tab" data-tab="stats">📊 Stats</button>
+          <button class="user-tab" data-tab="likes">❤️ Likes</button>
+          <button class="user-tab" data-tab="settings">⚙️ Config</button>
         </div>
         
         <div id="loginForm" class="auth-form active">
@@ -169,9 +180,12 @@
             <input type="password" id="loginPassword" placeholder="Contraseña" required>
           </div>
           <button id="loginBtn" class="auth-btn">Iniciar Sesión</button>
-          <div class="auth-divider">o</div>
+          <div class="forgot-password">
+            <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
+          </div>
+          <div class="auth-divider">- o -</div>
           <button id="googleLoginBtn" class="google-btn">
-            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjY0IDkuMjA0NTVDMTcuNjQgOC41NjY0MSAxNy41ODI3IDcuOTUyNzMgMTcuNDc2NCA3LjM2MzY0SDlWMTAuODQ1SDE0LjA0MzZDMTMuODQgMTEuOTcgMTMuMjU0NSAxMi45MjMgMTIuMzYzNiAxMy41NjE0VjE1LjgxOTFIMTUuMTA5MUMxNi42NTQ1IDE0LjQyMjcgMTcuNjQgMTIuMDMxOCAxNy42NCA5LjIwNDU1WiIgZmlsbD0iIzQyODVGNCIvPgo8cGF0aCBkPSJNOSAxOEM5IDEzLjUgMTEuNSAxMSAxNiAxMUMxNi41IDExIDE3IDExLjUgMTcgMTJDMTcgMTIuNSAxNi41IDEzIDE2IDEzSDlWMThaIiBmaWxsPSIjMzRBODUzIi8+CjxwYXRoIGQ9Ik05IDE4QzkgMTMuNSAxMS41IDExIDE2IDExQzE2LjUgMTEgMTcgMTEuNSAxNyAxMkMxNyAxMi41IDE2LjUgMTMgMTYgMTNIOVYxOFoiIGZpbGw9IiNGQkJDMDQiLz4KPHN2Zz4K" alt="Google">
+            <img src="../img-galery/Google.png" alt="Google">
             Continuar con Google
           </button>
         </div>
@@ -214,14 +228,15 @@
 
         <div id="userProfile" class="user-profile" style="display: none;">
           <h3>Mi Perfil</h3>
-          <div class="profile-picture-container">
-            <img id="userProfilePic" class="profile-picture" src="" alt="Foto de perfil">
+          <div class="profile-header">
+            <div class="profile-picture-container">
+              <img id="userProfilePic" class="profile-picture" src="" alt="Foto de perfil">
+            </div>
+            <div class="profile-name">
+              <h4 id="userDisplayNameHeader"></h4>
+            </div>
           </div>
           <div class="user-info">
-            <div class="user-info-item">
-              <span class="user-info-label">Usuario:</span>
-              <span class="user-info-value" id="userDisplayName"></span>
-            </div>
             <div class="user-info-item">
               <span class="user-info-label">Email:</span>
               <span class="user-info-value" id="userEmail"></span>
@@ -234,8 +249,174 @@
               <span class="user-info-label">Última conexión:</span>
               <span class="user-info-value" id="userLastLogin"></span>
             </div>
+            <div class="user-info-item">
+              <span class="user-info-label">Rango:</span>
+              <span class="user-info-value" id="userRole"></span>
+            </div>
+            <div class="user-info-item" id="tempPasswordItem" style="display: none;">
+              <span class="user-info-label">Contraseña temporal:</span>
+              <span class="user-info-value" id="userTempPassword"></span>
+            </div>
+            <div class="user-info-item" id="loginOptionsItem" style="display: none;">
+              <span class="user-info-label">Opciones de login:</span>
+              <span class="user-info-value" id="userLoginOptions"></span>
+            </div>
           </div>
+          <button id="editProfileBtn" class="auth-btn" style="margin-bottom: 0.5rem;">Editar Perfil</button>
           <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+        </div>
+        
+        <div id="userLikes" class="user-content" style="display: none;">
+          <h3>❤️ Mis Productos Favoritos</h3>
+          <div class="likes-header">
+            <div class="likes-count">Total: <span id="likesCount">0</span> productos</div>
+            <button class="clear-likes-btn" id="clearLikesBtn">🗑️ Limpiar Todo</button>
+          </div>
+          <div class="likes-grid" id="likesGrid">
+            <p class="empty-state">No tienes productos en favoritos aún</p>
+          </div>
+        </div>
+        
+        <div id="userStats" class="user-content" style="display: none;">
+          <h3>📊 Mis Estadísticas</h3>
+          <div class="stats-container">
+            <div class="stat-card">
+              <div class="stat-icon">🛒</div>
+              <div class="stat-info">
+                <div class="stat-number" id="totalPurchases">0</div>
+                <div class="stat-label">Compras Realizadas</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">❤️</div>
+              <div class="stat-info">
+                <div class="stat-number" id="totalLikes">0</div>
+                <div class="stat-label">Productos Favoritos</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🔖</div>
+              <div class="stat-info">
+                <div class="stat-number" id="totalSaved">0</div>
+                <div class="stat-label">Productos Guardados</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⭐</div>
+              <div class="stat-info">
+                <div class="stat-number" id="userLevel">1</div>
+                <div class="stat-label">Nivel de Usuario</div>
+              </div>
+            </div>
+          </div>
+          <div class="activity-timeline">
+            <h4>📈 Actividad Reciente</h4>
+            <div class="timeline" id="activityTimeline">
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <div class="timeline-title">¡Bienvenido!</div>
+                  <div class="timeline-date">Cuenta creada</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="userSaved" class="user-content" style="display: none;">
+          <h3>🔖 Productos Guardados</h3>
+          <div class="saved-grid" id="savedGrid">
+            <p class="empty-state">No tienes productos guardados aún</p>
+          </div>
+        </div>
+        
+        <div id="userNotifications" class="user-content" style="display: none;">
+          <h3>🔔 Notificaciones</h3>
+          <div class="notifications-container">
+            <div class="notification-filters">
+              <button class="notif-filter active" data-filter="all">Todas</button>
+              <button class="notif-filter" data-filter="system">Sistema</button>
+              <button class="notif-filter" data-filter="offers">Ofertas</button>
+            </div>
+            <div class="notifications-list" id="notificationsList">
+              <div class="notification-item unread">
+                <div class="notif-icon">🎉</div>
+                <div class="notif-content">
+                  <div class="notif-title">¡Bienvenido!</div>
+                  <div class="notif-text">Gracias por crear tu cuenta</div>
+                  <div class="notif-time">Hace 1 día</div>
+                </div>
+              </div>
+            </div>
+            <div class="notifications-actions">
+              <button class="clear-notif-btn" id="clearNotificationsBtn">Limpiar Todo</button>
+            </div>
+          </div>
+        </div>
+        
+        <div id="userSettings" class="user-content" style="display: none;">
+          <h3>⚙️ Configuración de Cuenta</h3>
+          <div class="settings-container">
+            <div class="setting-group">
+              <h4>🔔 Notificaciones</h4>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="emailNotifications" checked>
+                  <span class="setting-toggle"></span>
+                  Notificaciones por email
+                </label>
+              </div>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="promotionNotifications" checked>
+                  <span class="setting-toggle"></span>
+                  Ofertas y promociones
+                </label>
+              </div>
+            </div>
+            
+            <div class="setting-group">
+              <h4>🎨 Apariencia</h4>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="animationsEnabled" checked>
+                  <span class="setting-toggle"></span>
+                  Animaciones mejoradas
+                </label>
+              </div>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="compactMode">
+                  <span class="setting-toggle"></span>
+                  Modo compacto
+                </label>
+              </div>
+            </div>
+            
+            <div class="setting-group">
+              <h4>🔒 Privacidad</h4>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="profilePublic">
+                  <span class="setting-toggle"></span>
+                  Perfil público
+                </label>
+              </div>
+              <div class="setting-item">
+                <label class="setting-label">
+                  <input type="checkbox" id="activityVisible">
+                  <span class="setting-toggle"></span>
+                  Mostrar actividad
+                </label>
+              </div>
+            </div>
+            
+            <div class="setting-group danger-zone">
+              <h4>⚠️ Zona Peligrosa</h4>
+              <button class="danger-btn" id="deleteAccountBtn">🗑️ Eliminar Cuenta</button>
+              <p class="danger-text">Esta acción no se puede deshacer</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -386,6 +567,7 @@
     <script src="../data.js"></script>
     <script src="details.js"></script>
     <script type="module" src="../firebase.js"></script>
+    <script type="module" src="../firestore-functions.js"></script>
     <script src="../auth.js"></script>
     
     <!-- Quick Auth Fix -->
