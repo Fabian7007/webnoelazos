@@ -229,16 +229,12 @@ class FirestoreManager {
   // Obtener likes de un producto
   async getProductLikes(productId) {
     try {
-      // Consulta la colección 'likes' para contar los documentos que coinciden con el productId.
-      // Esto es más preciso que depender del campo 'likesCount' en el producto.
       const likesCollection = collection(this.db, 'likes');
       const q = query(likesCollection, where('productId', '==', productId));
       const querySnapshot = await getDocs(q);
-      // El tamaño del snapshot nos da el número exacto de likes.
       return querySnapshot.size;
     } catch (error) {
       console.error('Error getting product likes:', error);
-      return 0;
     }
   }
 

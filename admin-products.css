@@ -323,20 +323,26 @@
   width: 16px !important;
   height: 16px !important;
   transition: all 0.3s ease !important;
-  filter: none !important;
   display: block !important;
   opacity: 1 !important;
   visibility: visible !important;
+
+  filter: brightness(0) invert(1) !important; /* negro → blanco */
 }
 
 .like-btn.liked {
-  background: rgba(255, 0, 0, 0.8) !important;
+  background: rgba(255, 255, 255, 0) !important;
   border-radius: 50% !important;
   padding: 6px !important;
 }
 
 .like-btn.liked .heart-icon {
   filter: brightness(0) invert(1) !important;
+}
+
+.like-btn.liked {
+  background-color: rgba(0, 0, 0, 0) !important;
+  color: white !important;
 }
 
 .like-btn:hover {

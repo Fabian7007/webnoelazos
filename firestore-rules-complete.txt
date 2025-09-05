@@ -30,15 +30,16 @@ service cloud.firestore {
     }
 
     // Colección de likes - cualquier usuario puede crear/leer likes
-    match /likes/{likeId} {
+   match /likes/{likeId} {
+      // Cualquiera puede leer los likes para contarlos.
       allow read: if true;
-      allow create, delete, update: if true;
-    }
+      // Solo un usuario autenticado puede crear o borrar un like,
+      // y solo si el ID del documento de like coincide con su propio ID de usuario.
+      // Esto previene que un usuario dé "like" en nombre de otro.
+      allow create, delete: if request.auth != null && likeId == request.resource.data.productId + '_' + request.auth.uid;
+   }
 
     // Regla general para otras colecciones (si las hubiera)
-    match /{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
+    // Es mejor evitar reglas generales tan amplias. Sé explícito para cada colección.
   }
 }

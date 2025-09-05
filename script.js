@@ -333,7 +333,7 @@ function createProductElement(prod) {
       <p class="product-price">$${prod.precio.toLocaleString('es-AR')}</p>
       <div class="like-container">
         <button class="like-btn" data-product-id="${prod.id}" title="Me gusta">
-          <img src="/img-galery/heartproduct.svg" alt="Like" class="heart-icon" />
+          <img src="/img-galery/heart-icon.svg" alt="Like" class="heart-icon" />
         </button>
         <span class="like-count" data-product-id="${prod.id}">${prod.likesCount || 0}</span>
       </div>
@@ -570,8 +570,18 @@ function applyFilters(page = 1) {
     container.appendChild(productElement);
     
     // Load like count and status for this product
-    loadProductLikeData(prod.id);
+    setTimeout(() => loadProductLikeData(prod.id), 100);
   });
+  
+  // Actualizar estados de likes después de renderizar
+  setTimeout(() => {
+    document.querySelectorAll('.like-btn').forEach(btn => {
+      const productId = btn.dataset.productId;
+      if (productId && window.realtimeLikes) {
+        window.realtimeLikes.loadInitialState(productId);
+      }
+    });
+  }, 500);
   
   // CREAR PAGINACIÓN si hay más de una página
   if (totalPages > 1) {
@@ -1204,6 +1214,12 @@ function initializeApp() {
     adminControls.style.display = isAdmin ? 'block' : 'none';
   }
 
+  // Inicializar sistema de likes en tiempo real
+  setTimeout(() => {
+    if (window.initRealtimeLikes) {
+      window.initRealtimeLikes();
+    }
+  }, 2000);
 
   console.log('Aplicación inicializada correctamente');
 }
@@ -1243,45 +1259,6 @@ function generateAnonymousId() {
   return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
 
-// Función para actualizar UI de likes inmediatamente
-function updateLikeUI(productId, isLiked) {
-  console.log('=== UPDATING UI ===');
-  console.log('Product ID:', productId);
-  console.log('Is Liked:', isLiked);
-  
-  // Buscar elementos
-  const likeBtn = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
-  const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
-  
-  console.log('Like button found:', !!likeBtn);
-  console.log('Count element found:', !!countElement);
-  
-  if (likeBtn) {
-    console.log('Current button classes:', likeBtn.className);
-    if (isLiked) {
-      likeBtn.classList.add('liked');
-      console.log('✅ Added "liked" class');
-    } else {
-      likeBtn.classList.remove('liked');
-      console.log('❌ Removed "liked" class');
-    }
-    console.log('New button classes:', likeBtn.className);
-  } else {
-    console.error('❌ Like button not found for product:', productId);
-  }
-  
-  if (countElement) {
-    const currentCount = parseInt(countElement.textContent) || 0;
-    const newCount = isLiked ? currentCount + 1 : Math.max(0, currentCount - 1);
-    countElement.textContent = newCount;
-    console.log('📊 Count updated:', currentCount, '→', newCount);
-  } else {
-    console.error('❌ Count element not found for product:', productId);
-  }
-  
-  console.log('=== UI UPDATE COMPLETE ===');
-}
-
 // Configurar listener en tiempo real para likes de un producto
 function setupProductLikeListener(productId) {
   if (!window.firestoreManager || !window.firestoreManager.listenToProductLikes) {
@@ -1319,98 +1296,88 @@ function cleanupProductListeners() {
   }
 }
 
-// FUNCIONES DE LIKES
+// FUNCIÓN DE LIKES SIMPLE
 async function toggleProductLike(productId, buttonElement) {
-  // Obtener usuario actual (autenticado o anónimo)
-  const currentUser = window.authModal?.currentUser || window.authFunctions?.getCurrentUser?.();
-  let userId;
+  if (!buttonElement || !window.realtimeLikes) return;
+
+  // Llamar a toggleLike y pasar el elemento del botón para la actualización de UI
+  await window.realtimeLikes.toggleLike(productId, buttonElement);
+}
+
+// Función para refrescar un producto específico
+async function refreshSingleProduct(productId) {
+  const productElement = document.querySelector(`[data-id="${productId}"], .product:has(.like-btn[data-product-id="${productId}"])`);
+  if (!productElement) return;
   
-  if (currentUser && currentUser.uid) {
-    // Usuario autenticado (incluye Google)
-    userId = currentUser.uid;
-  } else {
-    // Usuario anónimo
-    const anonId = localStorage.getItem('anonymousUserId') || generateAnonymousId();
-    userId = `anon_${anonId}`;
-    localStorage.setItem('anonymousUserId', anonId);
+  // Encontrar el producto en el array
+  const product = productos.find(p => p.id === productId);
+  if (!product) return;
+  
+  // Crear nuevo elemento del producto
+  const newProductElement = createProductElement(product);
+  
+  // Copiar event listeners
+  setupProductEventListeners(newProductElement, product);
+  
+  // Reemplazar el elemento
+  productElement.parentNode.replaceChild(newProductElement, productElement);
+  
+  // Cargar datos de likes actualizados
+  await loadProductLikeData(productId);
+}
+
+// Función para configurar event listeners de un producto
+function setupProductEventListeners(productElement, product) {
+  // Event listener para navegar a detalles
+  if (product.status !== 'agotado') {
+    productElement.addEventListener('click', (e) => {
+      if (!e.target.closest('.add-to-cart-btn') && !e.target.closest('.like-btn') && !e.target.closest('.admin-actions')) {
+        window.location.href = `details/details.html?id=${product.id}`;
+      }
+    });
   }
 
-  if (!window.firestoreManager) {
-    console.error('Firestore manager not available');
-    return;
+  // Event listener para el botón del carrito
+  const cartBtn = productElement.querySelector('.add-to-cart-btn');
+  if (cartBtn && product.status !== 'agotado') {
+    cartBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addProductToCart(product.id, cartBtn);
+    });
   }
 
-  try {
-    console.log('Toggling like for product:', productId, 'user:', userId);
-    
-    const hasLiked = await window.firestoreManager.hasUserLiked(productId, userId);
-    console.log('Current like status:', hasLiked);
-    
-    // Actualizar UI inmediatamente
-    const newLikedState = !hasLiked;
-    console.log('New like state will be:', newLikedState);
-    updateLikeUI(productId, newLikedState);
-    
-    if (hasLiked) {
-      await window.firestoreManager.unlikeProduct(productId, userId);
-      console.log('Removed like');
-    } else {
-      await window.firestoreManager.likeProduct(productId, userId);
-      console.log('Added like');
-    }
-    
-    // Actualizar contador desde Firestore
-    setTimeout(() => loadProductLikeData(productId), 100);
-    
-  } catch (error) {
-    console.error('Error toggling like:', error);
-    if (window.authModal) {
-      window.authModal.showNotification('Error al procesar like', 'error');
-    }
+  // Event listener para el contenedor de like
+  const likeContainer = productElement.querySelector('.like-container');
+  if (likeContainer) {
+    likeContainer.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const likeBtn = likeContainer.querySelector('.like-btn');
+      toggleProductLike(product.id, likeBtn);
+    });
+  }
+
+  // Event listeners para botones de admin
+  const editBtn = productElement.querySelector('.edit-product-btn');
+  const deleteBtn = productElement.querySelector('.delete-product-btn');
+  
+  if (editBtn && window.editProduct) {
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.editProduct(product.id);
+    });
+  }
+  
+  if (deleteBtn && window.deleteProduct) {
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.deleteProduct(product.id);
+    });
   }
 }
 
 async function loadProductLikeData(productId) {
-  if (!window.firestoreManager) {
-    console.log('Firestore manager not available for product:', productId);
-    return;
-  }
-  
-  try {
-    // Cargar contador de likes
-    const likeCount = await window.firestoreManager.getProductLikes(productId);
-    const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
-    if (countElement) {
-      countElement.textContent = likeCount;
-      console.log(`Loaded ${likeCount} likes for product ${productId}`);
-    }
-    
-    // Verificar si el usuario actual dio like
-    const currentUser = window.authModal?.currentUser || window.authFunctions?.getCurrentUser?.();
-    let userId;
-    
-    if (currentUser && currentUser.uid) {
-      userId = currentUser.uid;
-    } else {
-      const anonId = localStorage.getItem('anonymousUserId');
-      if (anonId) {
-        userId = `anon_${anonId}`;
-      }
-    }
-    
-    if (userId) {
-      const hasLiked = await window.firestoreManager.hasUserLiked(productId, userId);
-      const likeContainer = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
-      if (likeContainer) {
-        if (hasLiked) {
-          likeContainer.classList.add('liked');
-        } else {
-          likeContainer.classList.remove('liked');
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error loading like data for product', productId, ':', error);
+  if (window.simpleLikes) {
+    window.simpleLikes.updateButton(productId);
   }
 }
 
@@ -1437,28 +1404,5 @@ window.addEventListener('load', function() {
     setTimeout(() => {
       applyFilters(currentPage);
     }, 100);
-  }
-});
-
-document.addEventListener('click', (e) => {
-  if (e.target.closest('.like-btn')) {
-    const button = e.target.closest('.like-btn');
-    const productId = button.dataset.productId;
-    const userId = window.authModal?.currentUser?.uid;
-
-    if (!userId) {
-      alert('Debes iniciar sesión para dar like.');
-      return;
-    }
-
-    if (button.classList.contains('liked')) {
-      window.firestoreManager.removeLike(userId, productId).then(() => {
-        button.classList.remove('liked');
-      });
-    } else {
-      window.firestoreManager.addLike(userId, productId).then(() => {
-        button.classList.add('liked');
-      });
-    }
   }
 });

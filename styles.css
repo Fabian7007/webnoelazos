@@ -457,9 +457,9 @@ body.no-scroll {
 
 .cart-header h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 0.65rem;
   color: #4a4a4a;
-  font-weight: 600;
+  font-weight: 300;
 }
 
 .cart-close {
@@ -700,13 +700,13 @@ body.cart-open {
 }
 
 .menu-header {
-  padding: 12px 18px;
-  margin: 0 0 2rem 0;
+  padding: 8px 12px;
+  margin: 0 0 1rem 0;
   background: rgb(253, 222, 221);
   color: #4a4a4a;
   text-align: center;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 0.65rem;
+  font-weight: 300;
   border-bottom: 1px dashed rgb(0, 0, 0);
   border-bottom-right-radius: 30px;
   border-bottom-left-radius: 30px;
@@ -1054,6 +1054,47 @@ body.cart-open {
   height: 120px;
 }
 
+/* Product actions container */
+.product-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.edit-product-btn,
+.delete-product-btn {
+  background: rgba(255, 182, 193, 0.2);
+  border: 1px solid rgba(255, 182, 193, 0.5);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-product-btn:hover {
+  background: rgba(0, 123, 255, 0.1);
+  border-color: #007bff;
+}
+
+.delete-product-btn:hover {
+  background: rgba(220, 53, 69, 0.1);
+  border-color: #dc3545;
+}
+
+.edit-product-btn img,
+.delete-product-btn img {
+  width: 16px;
+  height: 16px;
+}
+
 .product-price {
   font-size: 1.1rem;
   font-weight: 600;
@@ -1063,7 +1104,7 @@ body.cart-open {
 
 .product-info h3 {
   margin: 0 0 8px 0;
-  font-size: 1.1rem;
+  font-size: 1.5rem !important;
   color: #4a4a4a;
   height: 2.8em;
   overflow: hidden;
@@ -1073,7 +1114,7 @@ body.cart-open {
   -webkit-box-orient: vertical;
   line-height: 1.4em;
   width: 100%;
-  font-weight: 500;
+  font-weight: bold !important;
 }
 
 /* Glow animation for added products */
@@ -1338,8 +1379,6 @@ body.cart-open {
     height: 18px;
   }
 
-
-
   .mobile-menu {
     width: 240px;
   }
@@ -1417,8 +1456,6 @@ body.cart-open {
     font-size: 1rem;
   }
 
-
-
   .section-title {
     font-size: 1.4rem;
     margin-bottom: 1.8rem;
@@ -1467,8 +1504,6 @@ body.cart-open {
   .product-price {
     font-size: 1rem;
   }
-
-
 
   .section-title {
     font-family: "Dosis", sans-serif;
@@ -1536,156 +1571,114 @@ body.cart-open {
   transform: scale(1.05);
 }
 
-/* ===== SISTEMA DE LIKES - ESTILOS DEFINITIVOS ===== */
+/* ===== SISTEMA DE LIKES - ESTILOS CORREGIDOS ===== */
 .like-container {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 4px !important;
-  margin-top: 8px !important;
-  padding: 4px 8px !important;
-  background: rgba(255, 182, 193, 0.1) !important;
-  border: 1px solid rgba(255, 182, 193, 0.3) !important;
-  border-radius: 12px !important;
-  width: fit-content !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 4px 8px;
+  background: rgba(255, 182, 193, 0.1);
+  border: 1px solid rgba(255, 182, 193, 0.3);
+  border-radius: 12px;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .like-container:hover {
-  background: rgba(255, 182, 193, 0.2) !important;
-  transform: scale(1.05) !important;
+  background: rgba(255, 182, 193, 0.2);
+  transform: scale(1.05);
 }
 
 .like-btn {
-  background: none !important;
-  border: none !important;
-  cursor: pointer !important;
-  padding: 2px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: transform 0.2s ease !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  outline: none !important;
+  background: #ff0000;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  outline: none;
+  border-radius: 50%;
 }
 
 .like-btn:hover {
-  transform: scale(1.1) !important;
+  transform: scale(1.1);
 }
 
-.like-btn.liked {
-  background: #ff0000 !important;
-  border-radius: 50% !important;
+.like-btn.liked,
+.like-btn[data-liked="true"] {
+  background: #ff1744 !important;
+  background-color: #ff1744 !important;
   padding: 4px !important;
+  border-radius: 50% !important;
+  position: relative !important;
 }
 
-.like-btn.liked .heart-icon {
-  filter: brightness(0) saturate(100%) invert(100%) !important;
+/* Overlay de respaldo para forzar el background */
+.like-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: #ff1744 !important;
+  border-radius: 50% !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
 }
 
 .heart-icon {
-  width: 16px !important;
-  height: 16px !important;
-  transition: filter 0.2s ease !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: block !important;
+  width: 12px;
+  height: 12px;
+  transition: all 0.2s ease;
+  display: block;
+  filter: brightness(0) invert(1) !important;
 }
 
 .like-count {
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  color: #666 !important;
-  min-width: 12px !important;
-  text-align: center !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: block !important;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  min-width: 12px;
+  text-align: center;
 }
 
 /* Responsive styles for likes */
 @media (max-width: 768px) {
   .like-container {
-    margin-top: 6px !important;
-    padding: 3px 6px !important;
-    gap: 3px !important;
+    margin-top: 6px;
+    padding: 3px 6px;
+    gap: 3px;
   }
   .heart-icon {
-    width: 14px !important;
-    height: 14px !important;
+    width: 10px;
+    height: 10px;
   }
   .like-count {
-    font-size: 0.7rem !important;
+    font-size: 0.7rem;
   }
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
   .like-container {
-    margin-top: 6px !important;
-    padding: 4px 7px !important;
-    gap: 3px !important;
+    margin-top: 6px;
+    padding: 4px 7px;
+    gap: 3px;
   }
   .heart-icon {
-    width: 15px !important;
-    height: 15px !important;
+    width: 11px;
+    height: 11px;
   }
   .like-count {
-    font-size: 0.75rem !important;
+    font-size: 0.75rem;
   }
-}
-
-
-
-.like-btn {
-  background: none !important;
-  border: none !important;
-  cursor: pointer !important;
-  padding: 2px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: transform 0.2s ease !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-.like-btn:hover {
-  transform: scale(1.1) !important;
-}
-
-.like-btn.liked {
-  background: #ff1744 !important;
-  border-radius: 50% !important;
-  padding: 4px !important;
-}
-
-.like-btn.liked .heart-icon {
-  filter: brightness(0) saturate(100%) invert(100%) !important;
-}
-
-.heart-icon {
-  width: 16px !important;
-  height: 16px !important;
-  transition: filter 0.2s ease !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-.like-count {
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  color: #666 !important;
-  min-width: 12px !important;
-  text-align: center !important;
-  opacity: 1 !important;
-  visibility: visible !important;
 }
 
 /* Import Dosis font from Google Fonts */

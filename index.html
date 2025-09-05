@@ -396,10 +396,58 @@
         </div>
 
         <div class="user-tabs" id="userTabs" style="display: none">
-          <button class="user-tab active" data-tab="profile"><img src="/img-galery/profile.svg" alt="" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;" /> Perfil</button>
-          <button class="user-tab" data-tab="stats"><img src="/img-galery/stats.svg" alt="" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;" /> Stats</button>
-          <button class="user-tab" data-tab="likes"><img src="/img-galery/heartprofile.svg" alt="" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;" /> Likes</button>
-          <button class="user-tab" data-tab="settings"><img src="/img-galery/settings.svg" alt="" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;" /> Config</button>
+          <button class="user-tab active" data-tab="profile">
+            <img
+              src="/img-galery/profile.svg"
+              alt=""
+              style="
+                width: 16px;
+                height: 16px;
+                margin-right: 4px;
+                vertical-align: middle;
+              "
+            />
+            Perfil
+          </button>
+          <button class="user-tab" data-tab="stats">
+            <img
+              src="/img-galery/stats.svg"
+              alt=""
+              style="
+                width: 16px;
+                height: 16px;
+                margin-right: 4px;
+                vertical-align: middle;
+              "
+            />
+            Stats
+          </button>
+          <button class="user-tab" data-tab="likes">
+            <img
+              src="/img-galery/heartprofile.svg"
+              alt=""
+              style="
+                width: 16px;
+                height: 16px;
+                margin-right: 4px;
+                vertical-align: middle;
+              "
+            />
+            Likes
+          </button>
+          <button class="user-tab" data-tab="settings">
+            <img
+              src="/img-galery/settings.svg"
+              alt=""
+              style="
+                width: 16px;
+                height: 16px;
+                margin-right: 4px;
+                vertical-align: middle;
+              "
+            />
+            Config
+          </button>
         </div>
 
         <div id="loginForm" class="auth-form active">
@@ -617,20 +665,27 @@
           <h3>Mis Estadísticas</h3>
           <div class="stats-container">
             <div class="stat-card">
-              <img src="/img-galery/heartprofile.svg" alt="" class="stat-icon" style="width: 2rem; height: 2rem;" />
+              <img
+                src="/img-galery/heartprofile.svg"
+                alt=""
+                class="stat-icon"
+                style="width: 2rem; height: 2rem"
+              />
               <div class="stat-number" id="totalLikes">0</div>
               <div class="stat-label">Productos Favoritos</div>
             </div>
             <div class="stat-card">
-              <img src="/img-galery/star.svg" alt="" class="stat-icon" style="width: 2rem; height: 2rem;" />
+              <img
+                src="/img-galery/star.svg"
+                alt=""
+                class="stat-icon"
+                style="width: 2rem; height: 2rem"
+              />
               <div class="stat-number" id="userLevel">1</div>
               <div class="stat-label">Nivel de Usuario</div>
             </div>
           </div>
-
         </div>
-
-
 
         <div id="userNotifications" class="user-content" style="display: none">
           <h3>Notificaciones</h3>
@@ -796,9 +851,9 @@
       </section>
 
       <!-- Admin Add Product Button -->
-      <div class="admin-controls" id="adminControls" style="display: none;">
+      <div class="admin-controls" id="adminControls" style="display: none">
         <button id="addProductBtn" class="add-product-btn">
-          <span style="font-size: 16px; margin-right: 8px;">+</span>
+          <span style="font-size: 16px; margin-right: 8px">+</span>
           Agregar Producto
         </button>
       </div>
@@ -949,6 +1004,9 @@
     <!-- Scripts -->
     <script type="module" src="firebase.js"></script>
     <script type="module" src="firestore-functions.js"></script>
+    <script type="module" src="likes-realtime.js"></script>
+    <script type="module" src="likes-unified.js"></script>
+    <script src="likes-simple.js"></script>
     <script src="data.js"></script>
     <script src="content/content.js"></script>
     <script src="script.js"></script>
@@ -962,7 +1020,6 @@
     <script src="user-panel-enhanced.js"></script>
     <script src="user-panel-config.js"></script>
     <script src="admin-products.js"></script>
-
 
     <!-- Enhanced Loading and Initialization Script -->
     <script>
@@ -1179,6 +1236,5 @@
         });
       }
     </script>
-
   </body>
 </html>

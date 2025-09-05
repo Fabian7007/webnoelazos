@@ -565,7 +565,7 @@ class MinimalProductCarousel {
           <p>$${product.precio?.toLocaleString('es-AR') || '0'}</p>
           <div class="product-actions">
             <button class="like-btn" data-id="${product.id}">
-              <img src="/img-galery/heart-icon.svg" alt="Like" class="heart-icon">
+              <img src="/img-galery/heartproduct.svg" alt="Like" class="heart-icon">
             </button>
             <button class="add-to-cart-btn" data-id="${product.id}">
               <img src="/img-galery/cart-icon.svg" alt="Añadir al carrito" class="cart-btn-icon">
