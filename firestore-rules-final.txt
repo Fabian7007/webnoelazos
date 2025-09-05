@@ -2,20 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Colección de usuarios
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      // Los administradores pueden leer todos los usuarios
-      allow read: if request.auth != null && exists(/databases/$(database)/documents/admin/$(request.auth.uid));
-    }
-
-    // Colección de administradores - solo lectura, escritura bloqueada desde el cliente
-    match /admin/{adminId} {
-      allow read: if request.auth != null;
-      allow write: if false; // Solo se puede modificar desde Firebase Console
-    }
-
-    // Colección de productos
     match /products/{productId} {
       allow read: if true;
       allow create, delete: if request.auth != null && exists(/databases/$(database)/documents/admin/$(request.auth.uid));
@@ -29,16 +15,19 @@ service cloud.firestore {
           request.resource.data.likesCount == resource.data.likesCount - 1));
     }
 
-    // Colección de likes - cualquier usuario puede crear/leer likes
     match /likes/{likeId} {
       allow read: if true;
       allow create, delete, update: if true;
     }
 
-    // Regla general para otras colecciones (si las hubiera)
-    match /{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && exists(/databases/$(database)/documents/admin/$(request.auth.uid));
+    }
+
+    match /admin/{adminId} {
+      allow read: if request.auth != null;
+      allow write: if false;
     }
   }
 }

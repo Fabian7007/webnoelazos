@@ -153,10 +153,24 @@ class FirestoreManager {
     try {
       console.log('Attempting to like product:', productId, 'by user:', userId);
       
+      // Obtener información del usuario
+      let userInfo = { username: 'Anónimo', email: 'anónimo' };
+      
+      if (!userId.startsWith('anon_')) {
+        // Usuario autenticado - obtener datos
+        const userData = await this.getUser(userId);
+        if (userData) {
+          userInfo.username = userData.username || 'Usuario';
+          userInfo.email = userData.email || 'No disponible';
+        }
+      }
+      
       const likeRef = doc(this.db, 'likes', `${productId}_${userId}`);
       await setDoc(likeRef, {
         productId: productId,
         userId: userId,
+        username: userInfo.username,
+        email: userInfo.email,
         createdAt: new Date()
       });
       

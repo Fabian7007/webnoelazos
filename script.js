@@ -436,6 +436,8 @@ function applyFilters(page = 1) {
   const isMobile = window.innerWidth <= 768;
   const scrollY = window.scrollY;
 
+
+  
   // Limpiar contenedores
   container.innerHTML = "";
   infoFooter.innerHTML = "";
@@ -633,6 +635,8 @@ function applyFilters(page = 1) {
   summary.textContent = `Mostrando ${startProduct} - ${endProduct} de ${filteredProducts.length} productos`;
   infoFooter.appendChild(summary);
 
+
+  
   // Restaurar scroll en móvil
   if (isMobile) {
     window.scrollTo({
@@ -1239,6 +1243,82 @@ function generateAnonymousId() {
   return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
 
+// Función para actualizar UI de likes inmediatamente
+function updateLikeUI(productId, isLiked) {
+  console.log('=== UPDATING UI ===');
+  console.log('Product ID:', productId);
+  console.log('Is Liked:', isLiked);
+  
+  // Buscar elementos
+  const likeBtn = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
+  const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
+  
+  console.log('Like button found:', !!likeBtn);
+  console.log('Count element found:', !!countElement);
+  
+  if (likeBtn) {
+    console.log('Current button classes:', likeBtn.className);
+    if (isLiked) {
+      likeBtn.classList.add('liked');
+      console.log('✅ Added "liked" class');
+    } else {
+      likeBtn.classList.remove('liked');
+      console.log('❌ Removed "liked" class');
+    }
+    console.log('New button classes:', likeBtn.className);
+  } else {
+    console.error('❌ Like button not found for product:', productId);
+  }
+  
+  if (countElement) {
+    const currentCount = parseInt(countElement.textContent) || 0;
+    const newCount = isLiked ? currentCount + 1 : Math.max(0, currentCount - 1);
+    countElement.textContent = newCount;
+    console.log('📊 Count updated:', currentCount, '→', newCount);
+  } else {
+    console.error('❌ Count element not found for product:', productId);
+  }
+  
+  console.log('=== UI UPDATE COMPLETE ===');
+}
+
+// Configurar listener en tiempo real para likes de un producto
+function setupProductLikeListener(productId) {
+  if (!window.firestoreManager || !window.firestoreManager.listenToProductLikes) {
+    return;
+  }
+  
+  // Evitar múltiples listeners para el mismo producto
+  if (window.productListeners && window.productListeners[productId]) {
+    return;
+  }
+  
+  if (!window.productListeners) {
+    window.productListeners = {};
+  }
+  
+  const unsubscribe = window.firestoreManager.listenToProductLikes(productId, (newCount) => {
+    const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
+    if (countElement) {
+      countElement.textContent = newCount;
+    }
+  });
+  
+  window.productListeners[productId] = unsubscribe;
+}
+
+// Limpiar todos los listeners de productos
+function cleanupProductListeners() {
+  if (window.productListeners) {
+    Object.values(window.productListeners).forEach(unsubscribe => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    });
+    window.productListeners = {};
+  }
+}
+
 // FUNCIONES DE LIKES
 async function toggleProductLike(productId, buttonElement) {
   // Obtener usuario actual (autenticado o anónimo)
@@ -1262,22 +1342,24 @@ async function toggleProductLike(productId, buttonElement) {
 
   try {
     console.log('Toggling like for product:', productId, 'user:', userId);
-    console.log('Current user object:', currentUser);
-    console.log('User UID:', currentUser?.uid);
     
     const hasLiked = await window.firestoreManager.hasUserLiked(productId, userId);
+    console.log('Current like status:', hasLiked);
+    
+    // Actualizar UI inmediatamente
+    const newLikedState = !hasLiked;
+    console.log('New like state will be:', newLikedState);
+    updateLikeUI(productId, newLikedState);
     
     if (hasLiked) {
       await window.firestoreManager.unlikeProduct(productId, userId);
-      buttonElement.classList.remove('liked');
       console.log('Removed like');
     } else {
       await window.firestoreManager.likeProduct(productId, userId);
-      buttonElement.classList.add('liked');
       console.log('Added like');
     }
     
-    // Actualizar contador inmediatamente
+    // Actualizar contador desde Firestore
     setTimeout(() => loadProductLikeData(productId), 100);
     
   } catch (error) {

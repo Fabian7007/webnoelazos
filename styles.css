@@ -1660,9 +1660,14 @@ body.cart-open {
   transform: scale(1.1) !important;
 }
 
+.like-btn.liked {
+  background: #ff1744 !important;
+  border-radius: 50% !important;
+  padding: 4px !important;
+}
+
 .like-btn.liked .heart-icon {
-  filter: brightness(0) saturate(100%) invert(11%) sepia(100%) saturate(7426%)
-    hue-rotate(318deg) brightness(98%) contrast(95%) !important;
+  filter: brightness(0) saturate(100%) invert(100%) !important;
 }
 
 .heart-icon {

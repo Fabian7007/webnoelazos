@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Likes</title>
+    <style>
+        .like-btn.liked {
+            background: #ff1744 !important;
+            border-radius: 50% !important;
+            padding: 4px !important;
+        }
+        .like-btn.liked .heart-icon {
+            filter: brightness(0) saturate(100%) invert(100%) !important;
+        }
+        .like-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .like-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px;
+        }
+        .heart-icon {
+            width: 16px;
+            height: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test de Likes</h1>
+    
+    <div class="like-container" onclick="testToggleLike('123')">
+        <button class="like-btn" data-product-id="123">
+            <img src="/img-galery/heartproduct.svg" alt="Like" class="heart-icon" />
+        </button>
+        <span class="like-count" data-product-id="123">5</span>
+    </div>
+
+    <script>
+        function testToggleLike(productId) {
+            const likeBtn = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
+            const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
+            
+            const isCurrentlyLiked = likeBtn.classList.contains('liked');
+            const newLikedState = !isCurrentlyLiked;
+            
+            console.log('Toggling like:', { productId, isCurrentlyLiked, newLikedState });
+            
+            if (newLikedState) {
+                likeBtn.classList.add('liked');
+                const currentCount = parseInt(countElement.textContent) || 0;
+                countElement.textContent = currentCount + 1;
+            } else {
+                likeBtn.classList.remove('liked');
+                const currentCount = parseInt(countElement.textContent) || 0;
+                countElement.textContent = Math.max(0, currentCount - 1);
+            }
+        }
+    </script>
+</body>
+</html>
