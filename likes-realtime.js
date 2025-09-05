@@ -35,69 +35,92 @@ class RealtimeLikes {
     return `anon_${anonId}`;
   }
 
-  // TOGGLE LIKE CON ACTUALIZACIÓN INSTANTÁNEA
+  // TOGGLE LIKE CON ACTUALIZACIÓN INSTANTÁNEA Y CACHE LOCAL
   async toggleLike(productId, buttonElement) {
     const userId = this.getUserId();
     const likeId = `${productId}_${userId}`;
 
     try {
-      // Verificar estado actual
-      const likeRef = doc(this.db, 'likes', likeId);
-      const likeSnap = await getDoc(likeRef);
-      const hasLiked = likeSnap.exists();
+      // Verificar estado actual desde cache local primero
+      const localLikes = JSON.parse(localStorage.getItem('userLikes') || '{}');
+      const userLikesArray = localLikes[userId] || [];
+      const hasLikedLocal = userLikesArray.includes(productId);
+      
+      const newLikedState = !hasLikedLocal;
 
-      // ACTUALIZAR UI INMEDIATAMENTE (Optimistic Update)
-      this.updateLikeUI(productId, !hasLiked, buttonElement);
+      // ACTUALIZAR UI Y CACHE LOCAL INMEDIATAMENTE
+      this.updateLikeUI(productId, newLikedState, buttonElement);
+      this.updateLocalCache(productId, newLikedState);
 
-      if (hasLiked) {
-        // Quitar like
-        await deleteDoc(likeRef);
-        
-        // Decrementar contador en producto
+      // Actualizar contador en UI inmediatamente
+      const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
+      if(countElement) {
+        const currentCount = parseInt(countElement.textContent) || 0;
+        const newCount = newLikedState ? currentCount + 1 : Math.max(0, currentCount - 1);
+        countElement.textContent = newCount;
+        countElement.classList.add('like-count-animate');
+        setTimeout(() => countElement.classList.remove('like-count-animate'), 300);
+      }
+
+      // Luego actualizar Firebase si está disponible
+      if (this.db) {
+        const likeRef = doc(this.db, 'likes', likeId);
         const productRef = doc(this.db, 'products', productId);
-        await updateDoc(productRef, {
-          likesCount: increment(-1),
-          updatedAt: new Date()
-        });
-        // Actualizar contador en UI
-        const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
-        if(countElement) {
-          countElement.textContent = Math.max(0, parseInt(countElement.textContent) - 1);
-          countElement.classList.add('like-count-animate');
-          setTimeout(() => countElement.classList.remove('like-count-animate'), 300); // Coincide con la duración de la animación
-        }
-      } else {
-        // Dar like
-        await setDoc(likeRef, {
-          productId: productId,
-          userId: userId,
-          username: userId.startsWith('anon_') ? 'Anónimo' : 'Usuario',
-          createdAt: new Date()
-        });
         
-        // Incrementar contador en producto
-        const productRef = doc(this.db, 'products', productId);
-        await updateDoc(productRef, {
-          likesCount: increment(1),
-          updatedAt: new Date()
-        });
-        // Actualizar contador en UI
-        const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
-        if(countElement) {
-          countElement.textContent = parseInt(countElement.textContent) + 1;
-          countElement.classList.add('like-count-animate');
-          setTimeout(() => countElement.classList.remove('like-count-animate'), 300); // Coincide con la duración de la animación
+        if (newLikedState) {
+          // Dar like
+          await setDoc(likeRef, {
+            productId: productId,
+            userId: userId,
+            username: userId.startsWith('anon_') ? 'Anónimo' : 'Usuario',
+            createdAt: new Date()
+          });
+          await updateDoc(productRef, {
+            likesCount: increment(1),
+            updatedAt: new Date()
+          });
+        } else {
+          // Quitar like
+          await deleteDoc(likeRef);
+          await updateDoc(productRef, {
+            likesCount: increment(-1),
+            updatedAt: new Date()
+          });
         }
       }
 
-      console.log(`✅ Like ${hasLiked ? 'removed' : 'added'} successfully`);
+      console.log(`✅ Like ${newLikedState ? 'added' : 'removed'} successfully`);
 
     } catch (error) {
       console.error('❌ Error toggling like:', error);
-      // Revertir UI si falla
-      this.updateLikeUI(productId, !buttonElement.classList.contains('liked'), buttonElement); // Revertir al estado anterior
+      // Revertir UI y cache local si falla
+      this.updateLikeUI(productId, !buttonElement.classList.contains('liked'), buttonElement);
+      this.updateLocalCache(productId, !buttonElement.classList.contains('liked'));
       throw error;
     }
+  }
+  
+  // Función para actualizar cache local
+  updateLocalCache(productId, isLiked) {
+    const userId = this.getUserId();
+    const localLikes = JSON.parse(localStorage.getItem('userLikes') || '{}');
+    
+    if (!localLikes[userId]) {
+      localLikes[userId] = [];
+    }
+    
+    if (isLiked) {
+      if (!localLikes[userId].includes(productId)) {
+        localLikes[userId].push(productId);
+      }
+    } else {
+      const index = localLikes[userId].indexOf(productId);
+      if (index > -1) {
+        localLikes[userId].splice(index, 1);
+      }
+    }
+    
+    localStorage.setItem('userLikes', JSON.stringify(localLikes));
   }
 
   // Función para actualizar la UI del botón de like de forma instantánea
@@ -218,65 +241,95 @@ class RealtimeLikes {
     this.productListeners.set(productId, unsubscribe);
   }
 
-  // CARGAR ESTADO INICIAL DE LIKES
+  // CARGAR ESTADO INICIAL DE LIKES CON CACHE LOCAL
   async loadInitialState(productId) {
     try {
       const userId = this.getUserId();
       const likeId = `${productId}_${userId}`;
       
-      // Verificar si el usuario dio like
-      const likeRef = doc(this.db, 'likes', likeId);
-      const likeSnap = await getDoc(likeRef);
-      const hasLiked = likeSnap.exists();
+      // Usar cache local primero para respuesta inmediata
+      const localLikes = JSON.parse(localStorage.getItem('userLikes') || '{}');
+      const userLikesArray = localLikes[userId] || [];
+      const hasLikedLocal = userLikesArray.includes(productId);
       
-      // Obtener contador de likes
-      const productRef = doc(this.db, 'products', productId);
-      const productSnap = await getDoc(productRef);
-      const likesCount = productSnap.exists() ? (productSnap.data().likesCount || 0) : 0;
+      // Aplicar estado local inmediatamente
+      this.applyLikeState(productId, hasLikedLocal);
       
-      // Actualizar UI con estado inicial correcto
-      const likeBtn = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
-      const heartIcon = likeBtn?.querySelector('.heart-icon');
-      const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
-      
-      if (likeBtn && heartIcon) {
-        if (hasLiked) {
-          // APLICAR ESTADO LIKED
-          likeBtn.classList.add('liked');
-          likeBtn.setAttribute('data-liked', 'true');
-          heartIcon.src = '/img-galery/heart-filled.svg';
-          likeBtn.style.cssText += 'background: #ff1744 !important; border-radius: 50% !important; padding: 4px !important;';
-          
-          // Crear overlay si no existe
-          if (!likeBtn.querySelector('.like-overlay')) {
-            const overlay = document.createElement('div');
-            overlay.className = 'like-overlay';
-            overlay.style.cssText = 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #ff1744; border-radius: 50%; z-index: -1; pointer-events: none;';
-            likeBtn.style.position = 'relative';
-            likeBtn.appendChild(overlay);
-          }
-        } else {
-          // APLICAR ESTADO NO LIKED
-          likeBtn.classList.remove('liked');
-          likeBtn.setAttribute('data-liked', 'false');
-          heartIcon.src = '/img-galery/heartproduct.svg';
-          likeBtn.style.removeProperty('background');
-          
-          // Remover overlay si existe
-          const overlay = likeBtn.querySelector('.like-overlay');
-          if (overlay) overlay.remove();
+      // Luego verificar con Firebase si está disponible
+      if (this.db) {
+        const likeRef = doc(this.db, 'likes', likeId);
+        const likeSnap = await getDoc(likeRef);
+        const hasLikedFirebase = likeSnap.exists();
+        
+        // Obtener contador de likes
+        const productRef = doc(this.db, 'products', productId);
+        const productSnap = await getDoc(productRef);
+        const likesCount = productSnap.exists() ? (productSnap.data().likesCount || 0) : 0;
+        
+        // Actualizar contador
+        const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
+        if (countElement) {
+          countElement.textContent = likesCount;
         }
+        
+        // Si hay diferencia entre local y Firebase, usar Firebase
+        if (hasLikedLocal !== hasLikedFirebase) {
+          this.applyLikeState(productId, hasLikedFirebase);
+          // Actualizar cache local
+          if (hasLikedFirebase) {
+            if (!userLikesArray.includes(productId)) {
+              userLikesArray.push(productId);
+            }
+          } else {
+            const index = userLikesArray.indexOf(productId);
+            if (index > -1) {
+              userLikesArray.splice(index, 1);
+            }
+          }
+          localLikes[userId] = userLikesArray;
+          localStorage.setItem('userLikes', JSON.stringify(localLikes));
+        }
+        
+        // Configurar listener en tiempo real
+        this.setupProductListener(productId);
       }
-      
-      if (countElement) {
-        countElement.textContent = likesCount;
-      }
-      
-      // Configurar listener en tiempo real
-      this.setupProductListener(productId);
       
     } catch (error) {
       console.error('Error loading initial like state:', error);
+      // Fallback a estado local
+      const localLikes = JSON.parse(localStorage.getItem('userLikes') || '{}');
+      const userId = this.getUserId();
+      const userLikesArray = localLikes[userId] || [];
+      const hasLikedLocal = userLikesArray.includes(productId);
+      this.applyLikeState(productId, hasLikedLocal);
+    }
+  }
+  
+  // Función auxiliar para aplicar estado de like
+  applyLikeState(productId, isLiked) {
+    const likeBtn = document.querySelector(`.like-btn[data-product-id="${productId}"]`);
+    const heartIcon = likeBtn?.querySelector('.heart-icon');
+    
+    if (likeBtn && heartIcon) {
+      if (isLiked) {
+        likeBtn.classList.add('liked');
+        likeBtn.setAttribute('data-liked', 'true');
+        heartIcon.src = '/img-galery/heart-filled.svg';
+        // Aplicar múltiples métodos para asegurar el background rojo
+        likeBtn.style.setProperty('background', '#ff1744', 'important');
+        likeBtn.style.setProperty('background-color', '#ff1744', 'important');
+        likeBtn.style.setProperty('border-radius', '50%', 'important');
+        likeBtn.style.setProperty('padding', '6px', 'important');
+      } else {
+        likeBtn.classList.remove('liked');
+        likeBtn.setAttribute('data-liked', 'false');
+        heartIcon.src = '/img-galery/heartproduct.svg';
+        // Aplicar background blanco para estado no liked
+        likeBtn.style.setProperty('background', 'rgba(255, 255, 255, 0.9)', 'important');
+        likeBtn.style.setProperty('background-color', 'rgba(255, 255, 255, 0.9)', 'important');
+        likeBtn.style.setProperty('border-radius', '50%', 'important');
+        likeBtn.style.setProperty('padding', '6px', 'important');
+      }
     }
   }
 

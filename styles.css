@@ -912,7 +912,7 @@ body.cart-open {
   font-family: "Dosis", sans-serif;
   font-size: 1.5rem;
   color: #000000;
-  margin: 1;
+  margin: ;
   text-align: center;
   font-weight: 200;
 }
@@ -1359,7 +1359,7 @@ body.cart-open {
   }
 
   .product-info h3 {
-    font-size: 1.2rem;
+    font-size: 1rem !important;
     height: 2.6em;
   }
 
@@ -1449,7 +1449,7 @@ body.cart-open {
   }
 
   .product-info h3 {
-    font-size: 1.4rem;
+    font-size: 1.1rem !important;
   }
 
   .product-price {
@@ -1653,31 +1653,37 @@ body.cart-open {
 /* Responsive styles for likes */
 @media (max-width: 768px) {
   .like-container {
-    margin-top: 6px;
-    padding: 3px 6px;
-    gap: 3px;
+    margin-top: 4px;
+    padding: 2px 4px;
+    gap: 2px;
   }
   .heart-icon {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
   .like-count {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
+  }
+  .like-btn {
+    padding: 2px !important;
   }
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
   .like-container {
-    margin-top: 6px;
-    padding: 4px 7px;
-    gap: 3px;
+    margin-top: 5px;
+    padding: 3px 5px;
+    gap: 2px;
   }
   .heart-icon {
-    width: 11px;
-    height: 11px;
+    width: 9px;
+    height: 9px;
   }
   .like-count {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
+  }
+  .like-btn {
+    padding: 3px !important;
   }
 }
 

@@ -432,12 +432,6 @@ function applyFilters(page = 1) {
     }
   }
 
-  // Guardar scroll en móviles
-  const isMobile = window.innerWidth <= 768;
-  const scrollY = window.scrollY;
-
-
-  
   // Limpiar contenedores
   container.innerHTML = "";
   infoFooter.innerHTML = "";
@@ -647,13 +641,16 @@ function applyFilters(page = 1) {
 
 
   
-  // Restaurar scroll en móvil
-  if (isMobile) {
-    window.scrollTo({
-      top: scrollY,
-      behavior: 'instant'
+  // Preservar estados de likes después del renderizado
+  setTimeout(() => {
+    // Restaurar estados de likes desde localStorage o Firebase
+    document.querySelectorAll('.like-btn').forEach(btn => {
+      const productId = btn.dataset.productId;
+      if (productId && window.realtimeLikes) {
+        window.realtimeLikes.loadInitialState(productId);
+      }
     });
-  }
+  }, 100);
 }
 
 // Función para hacer scroll suave al top

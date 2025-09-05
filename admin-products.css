@@ -291,13 +291,13 @@
 
 .like-container {
   position: absolute !important;
-  bottom: 8px !important;
-  right: 8px !important;
+  top: 6px !important;
+  left: 2px !important;
   display: flex !important;
   align-items: center !important;
-  gap: 4px !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  padding: 4px 8px !important;
+  gap: 0px !important;
+  background: rgb(255 228 228 / 95%) !important;
+  padding: 8px 8px !important;
   border-radius: 20px !important;
   border: 1px solid rgba(222, 37, 136, 0.5) !important;
   z-index: 15 !important;
@@ -340,25 +340,57 @@
   filter: brightness(0) invert(1) !important;
 }
 
-.like-btn.liked {
-  background-color: rgba(0, 0, 0, 0) !important;
-  color: white !important;
+/* Forzar estilos de like para resistir re-renderizados */
+.like-btn[data-liked="true"] {
+  background: #ff1744 !important;
+  border-radius: 50% !important;
+  padding: 6px !important;
 }
 
-.like-btn:hover {
-  background: rgba(255, 107, 157, 0.05) !important;
-  transform: scale(1.1) !important;
+.like-btn[data-liked="false"] {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 50% !important;
+  padding: 6px !important;
+}
+
+/* Prevenir que el scroll afecte los estilos */
+.like-container {
+  position: absolute !important;
+  top: 6px !important;
+  left: 2px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0px !important;
+  background: rgb(255 228 228 / 95%) !important;
+  padding: 8px 8px !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(222, 37, 136, 0.5) !important;
+  z-index: 15 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 .like-count {
   font-size: 0.9rem !important;
-  color: #666 !important;
+  color: #df0000 !important;
   font-weight: 500 !important;
   min-width: 20px !important;
   text-align: center !important;
   display: block !important;
   opacity: 1 !important;
   visibility: visible !important;
+  pointer-events: none !important;
+}
+
+/* Animación para el contador */
+.like-count-animate {
+  animation: bounceCount 0.3s ease !important;
+}
+
+@keyframes bounceCount {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
 }
 
 .admin-actions {
