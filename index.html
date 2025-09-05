@@ -1103,7 +1103,7 @@
                 skeletonLoader.setAttribute("aria-hidden", "true");
               }
             }, "Skeleton loader removal");
-          }, 3500); // Reduced from 6.5s to 3.5s
+          }, 2000); // Reduced to 2s
 
           // Set the flag so this doesn't run again in this session
           sessionStorage.setItem("siteLoadedOnce", "true");
@@ -1166,16 +1166,14 @@
 
       // Initialize carousel after everything loads
       window.addEventListener("load", function () {
-        setTimeout(function () {
-          safeExecute(() => {
-            if (
-              window.handleMinimalCarouselSectionChange &&
-              typeof window.handleMinimalCarouselSectionChange === "function"
-            ) {
-              window.handleMinimalCarouselSectionChange("inicio");
-            }
-          }, "Carousel initialization");
-        }, 100);
+        safeExecute(() => {
+          if (
+            window.handleMinimalCarouselSectionChange &&
+            typeof window.handleMinimalCarouselSectionChange === "function"
+          ) {
+            window.handleMinimalCarouselSectionChange("inicio");
+          }
+        }, "Carousel initialization");
       });
 
       // Enhanced error handling for images

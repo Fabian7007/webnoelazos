@@ -249,6 +249,38 @@ class FirestoreManager {
       return false;
     }
   }
+
+  // Agregar comentario a producto
+  async addProductComment(productId, commentData) {
+    try {
+      const commentRef = doc(collection(this.db, 'comments'));
+      await setDoc(commentRef, {
+        ...commentData,
+        id: commentRef.id,
+        productId: productId,
+        createdAt: new Date()
+      });
+      return commentRef.id;
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
+  }
+
+  // Obtener comentarios de un producto
+  async getProductComments(productId) {
+    try {
+      const commentsRef = collection(this.db, 'comments');
+      const q = query(commentsRef, where('productId', '==', productId));
+      const snapshot = await getDocs(q);
+      const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Ordenar por fecha descendente (más recientes primero)
+      return comments.sort((a, b) => new Date(b.date) - new Date(a.date));
+    } catch (error) {
+      console.error('Error getting comments:', error);
+      return [];
+    }
+  }
 }
 
 // Initialize when Firebase app is available

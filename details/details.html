@@ -452,6 +452,272 @@
       </div>
     </div>
 
+    <!-- Auth Modal -->
+    <div id="authModal" class="auth-modal" style="display: none">
+      <div class="auth-modal-content">
+        <button class="auth-close">
+          <img src="../img-galery/close.svg" alt="Cerrar" />
+        </button>
+        <div class="auth-tabs" id="authTabs">
+          <button class="auth-tab active" data-tab="login">
+            Iniciar Sesión
+          </button>
+          <button class="auth-tab" data-tab="register">Registrarse</button>
+        </div>
+
+        <div class="user-tabs" id="userTabs" style="display: none">
+          <button class="user-tab active" data-tab="profile">
+            <img
+              src="../img-galery/profile.svg"
+              alt=""
+              style="
+                width: 16px;
+                height: 16px;
+                margin-right: 4px;
+                vertical-align: middle;
+              "
+            />
+            Perfil
+          </button>
+          <button class="user-tab" data-tab="stats">
+            <img
+              src="../img-galery/stats.svg"
+              alt=""
+              style="
+                width: 16px;
+                height: 16px;
+                margin-right: 4px;
+                vertical-align: middle;
+              "
+            />
+            Stats
+          </button>
+        </div>
+
+        <div id="loginForm" class="auth-form active">
+          <h3>Iniciar Sesión</h3>
+          <div class="input-group">
+            <input
+              type="text"
+              id="loginEmail"
+              placeholder="Correo electrónico o nombre de usuario"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <div class="password-input-container">
+              <input
+                type="password"
+                id="loginPassword"
+                placeholder="Contraseña"
+                required
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                data-target="loginPassword"
+              >
+                <img src="../img-galery/ojos.svg" alt="Mostrar contraseña" />
+              </button>
+            </div>
+          </div>
+          <button id="loginBtn" class="auth-btn">Iniciar Sesión</button>
+          <div class="forgot-password">
+            <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
+          </div>
+          <div class="auth-divider">- o -</div>
+          <button id="googleLoginBtn" class="google-btn">
+            <img src="../img-galery/Google.png" alt="Google" />
+            Continuar con Google
+          </button>
+        </div>
+
+        <div id="registerForm" class="auth-form compact">
+          <h3>Crear Cuenta</h3>
+          <div class="input-row">
+            <div class="input-group half">
+              <input
+                type="text"
+                id="registerUsername"
+                placeholder="Usuario (máx. 15)"
+                maxlength="15"
+                required
+              />
+            </div>
+            <div class="input-group half">
+              <input
+                type="email"
+                id="registerEmail"
+                placeholder="Email"
+                required
+              />
+            </div>
+          </div>
+          <div class="input-row">
+            <div class="input-group half">
+              <div class="password-input-container">
+                <input
+                  type="password"
+                  id="registerPassword"
+                  placeholder="Contraseña (mín. 6)"
+                  required
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  data-target="registerPassword"
+                >
+                  <img src="../img-galery/ojos.svg" alt="Mostrar contraseña" />
+                </button>
+              </div>
+              <div class="password-strength">
+                <div
+                  class="password-strength-bar"
+                  id="passwordStrengthBar"
+                ></div>
+              </div>
+            </div>
+            <div class="input-group half">
+              <div class="password-input-container">
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  placeholder="Repetir contraseña"
+                  required
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  data-target="confirmPassword"
+                >
+                  <img src="../img-galery/ojos.svg" alt="Mostrar contraseña" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="profile-image-label">Foto de perfil</label>
+            <input
+              type="file"
+              id="profileImage"
+              accept="image/*"
+              class="profile-image-input"
+              placeholder="Foto (opcional)"
+            />
+          </div>
+          <div class="captcha-container compact">
+            <div class="captcha-question">Escribe lo que ves:</div>
+            <div class="captcha-row">
+              <canvas id="captchaCanvas" width="100" height="30"></canvas>
+              <button type="button" id="refreshCaptcha" class="refresh-captcha">
+                <img
+                  src="../img-galery/reset.svg"
+                  alt="Regenerar"
+                  width="14"
+                  height="14"
+                />
+              </button>
+              <input
+                type="text"
+                id="captchaInput"
+                class="captcha-input"
+                placeholder="Números"
+                maxlength="5"
+                required
+              />
+            </div>
+          </div>
+          <button id="registerBtn" class="auth-btn">Crear Cuenta</button>
+        </div>
+
+        <div id="userProfile" class="user-profile" style="display: none">
+          <h3>Mi Perfil</h3>
+          <div class="profile-header">
+            <div class="profile-picture-container">
+              <img
+                id="userProfilePic"
+                class="profile-picture"
+                src=""
+                alt="Foto de perfil"
+              />
+              <div class="status-indicator" id="userStatusIndicator"></div>
+            </div>
+            <div class="profile-name">
+              <h4 id="userDisplayNameHeader"></h4>
+            </div>
+          </div>
+          <div class="user-info">
+            <div class="user-info-item">
+              <span class="user-info-label">Email:</span>
+              <span class="user-info-value" id="userEmail"></span>
+            </div>
+            <div class="user-info-item">
+              <span class="user-info-label">Cuenta creada:</span>
+              <span class="user-info-value" id="userCreated"></span>
+            </div>
+            <div class="user-info-item">
+              <span class="user-info-label">Última conexión:</span>
+              <span class="user-info-value" id="userLastLogin"></span>
+            </div>
+            <div class="user-info-item">
+              <span class="user-info-label">Rango:</span>
+              <span class="user-info-value" id="userRole"></span>
+            </div>
+            <div
+              class="user-info-item"
+              id="tempPasswordItem"
+              style="display: none"
+            >
+              <span class="user-info-label">Contraseña temporal:</span>
+              <span class="user-info-value" id="userTempPassword"></span>
+            </div>
+            <div
+              class="user-info-item"
+              id="loginOptionsItem"
+              style="display: none"
+            >
+              <span class="user-info-label">Opciones de login:</span>
+              <span class="user-info-value" id="userLoginOptions"></span>
+            </div>
+          </div>
+          <button
+            id="editProfileBtn"
+            class="auth-btn"
+            style="margin-bottom: 0.5rem"
+          >
+            Editar Perfil
+          </button>
+          <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+        </div>
+
+        <div id="userStats" class="user-content" style="display: none">
+          <h3>Mis Estadísticas</h3>
+          <div class="stats-container">
+            <div class="stat-card">
+              <img
+                src="../img-galery/heartprofile.svg"
+                alt=""
+                class="stat-icon"
+                style="width: 2rem; height: 2rem"
+              />
+              <div class="stat-number" id="totalLikes">0</div>
+              <div class="stat-label">Productos Favoritos</div>
+            </div>
+            <div class="stat-card">
+              <img
+                src="../img-galery/star.svg"
+                alt=""
+                class="stat-icon"
+                style="width: 2rem; height: 2rem"
+              />
+              <div class="stat-number" id="userLevel">1</div>
+              <div class="stat-label">Nivel de Usuario</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <main class="main-content">
       <div class="back-button-container">
         <button
@@ -472,62 +738,34 @@
         <!-- El contenido del producto se cargará aquí dinámicamente con JavaScript -->
       </div>
 
-      <!-- Nueva sección de Preguntas y Respuestas -->
+      <!-- Sección de Comentarios -->
       <section
-        class="qa-section"
-        aria-label="Preguntas y respuestas del producto"
+        class="comments-section"
+        aria-label="Comentarios del producto"
       >
-        <h2>Preguntas y Respuestas</h2>
-        <div class="qa-form">
-          <h3>Pregúntale al vendedor</h3>
+        <h2 id="commentsTitle">Comentarios (0)</h2>
+        
+        <div class="comment-form">
+          <h3>Agregar comentario</h3>
           <textarea
-            id="questionInput"
-            placeholder="Escribe tu pregunta aquí..."
+            id="commentInput"
+            placeholder="Escribe tu comentario aquí..."
             rows="3"
-            aria-label="Escribe tu pregunta"
+            aria-label="Escribe tu comentario"
           ></textarea>
-          <button id="postQuestionBtn" class="primary-action-btn">
-            Preguntar
+          <button id="postCommentBtn" class="primary-action-btn">
+            Comentar
           </button>
         </div>
+        
         <div
-          class="qa-list"
-          id="qaList"
+          class="comments-list"
+          id="commentsList"
           tabindex="0"
           aria-live="polite"
           aria-atomic="true"
         >
-          <!-- Las preguntas y respuestas se cargarán aquí -->
-          <div class="qa-item">
-            <p class="question">
-              <strong>Pregunta:</strong> ¿Tienen stock en color rosa?
-            </p>
-            <p class="answer">
-              <strong>Respuesta:</strong> Sí, tenemos stock disponible en color
-              rosa. ¡Esperamos tu compra!
-            </p>
-            <span class="qa-date">Hace 2 días</span>
-          </div>
-          <div class="qa-item">
-            <p class="question">
-              <strong>Pregunta:</strong> ¿Se puede retirar en persona?
-            </p>
-            <p class="answer">
-              <strong>Respuesta:</strong> Sí, puedes retirar en nuestro local de
-              Lunes a Viernes de 9 a 18hs.
-            </p>
-            <span class="qa-date">Hace 1 día</span>
-          </div>
-          <div class="qa-item">
-            <p class="question">
-              <strong>Pregunta:</strong> ¿Hacen envíos a todo el país?
-            </p>
-            <p class="answer">
-              <strong>Respuesta:</strong> Sí, realizamos envíos a todo el país a
-              través de Correo Argentino.
-            </p>
-            <span class="qa-date">Hace 5 horas</span>
-          </div>
+          <!-- Los comentarios se cargarán aquí -->
         </div>
       </section>
     </main>

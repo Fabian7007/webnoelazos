@@ -1114,7 +1114,7 @@ body.cart-open {
   -webkit-box-orient: vertical;
   line-height: 1.4em;
   width: 100%;
-  font-weight: bold !important;
+  font-weight: 300 !important;
 }
 
 /* Glow animation for added products */
@@ -1359,8 +1359,9 @@ body.cart-open {
   }
 
   .product-info h3 {
-    font-size: 1rem !important;
+    font-size: 1.2rem !important;
     height: 2.6em;
+    font-weight: 300 !important;
   }
 
   .product-price {
@@ -1449,7 +1450,8 @@ body.cart-open {
   }
 
   .product-info h3 {
-    font-size: 1.1rem !important;
+    font-size: 1.3rem !important;
+    font-weight: 300 !important;
   }
 
   .product-price {
@@ -1499,6 +1501,7 @@ body.cart-open {
   .product-info h3 {
     font-size: 0.95rem;
     height: 2.8em;
+    font-weight: 300 !important;
   }
 
   .product-price {

@@ -3,6 +3,7 @@ let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let currentProduct = null;
 let currentImageIndex = 0;
 let productImages = [];
+let productComments = [];
 
 /**
  * Elimina los acentos de una cadena de texto para búsquedas flexibles.
@@ -139,6 +140,7 @@ function toggleCart() {
     cartDropdown.classList.add('active');
     menuOverlay.classList.add('active');
     document.body.classList.add('cart-open');
+    // Solo renderizar cuando se abre el carrito
     renderCart();
   }
 }
@@ -277,12 +279,14 @@ function copyProductLink() {
 
 // Función para agregar producto al carrito con cantidad
 function addProductToCart(productId) {
-  const product = productos.find(p => p.id === productId);
+  // Normalizar ID para comparación
+  const normalizedId = String(productId);
+  const product = productos.find(p => String(p.id) === normalizedId);
   const quantityInput = document.getElementById('quantityInput');
   const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
   
   if (product) {
-    const existingItem = cart.find(item => item.id === productId);
+    const existingItem = cart.find(item => String(item.id) === normalizedId);
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
@@ -290,7 +294,12 @@ function addProductToCart(productId) {
     }
     localStorage.setItem('cart', JSON.stringify(cart));
     updateCartCount();
-    renderCart();
+    
+    // Solo renderizar carrito si está abierto
+    const cartDropdown = document.getElementById('cartDropdown');
+    if (cartDropdown && cartDropdown.classList.contains('active')) {
+      renderCart();
+    }
     
     // Mostrar notificación
     showCartNotification(`Agregado: ${quantity} x ${product.nombre}`);
@@ -342,25 +351,40 @@ function showCartNotification(message) {
 
 // Función para remover producto del carrito
 function removeProductFromCart(productId) {
-  cart = cart.filter(item => item.id !== productId);
+  // Normalizar ID para comparación
+  const normalizedId = String(productId);
+  cart = cart.filter(item => String(item.id) !== normalizedId);
   localStorage.setItem('cart', JSON.stringify(cart));
   updateCartCount();
-  renderCart();
+  
+  // Solo renderizar carrito si está abierto
+  const cartDropdown = document.getElementById('cartDropdown');
+  if (cartDropdown && cartDropdown.classList.contains('active')) {
+    renderCart();
+  }
 }
 
 // Función para actualizar cantidad de producto en carrito
 function updateCartItemQuantity(productId, change) {
-  const item = cart.find(item => item.id === productId);
+  // Normalizar ID para comparación
+  const normalizedId = String(productId);
+  const item = cart.find(item => String(item.id) === normalizedId);
   if (item) {
     item.quantity += change;
     if (item.quantity <= 0) {
       removeProductFromCart(productId);
+      return;
     } else {
       localStorage.setItem('cart', JSON.stringify(cart));
     }
   }
   updateCartCount();
-  renderCart();
+  
+  // Solo renderizar carrito si está abierto
+  const cartDropdown = document.getElementById('cartDropdown');
+  if (cartDropdown && cartDropdown.classList.contains('active')) {
+    renderCart();
+  }
 }
 
 // Función para actualizar contador del carrito
@@ -435,14 +459,14 @@ function renderCart() {
   // Agregar event listeners para botones del carrito
   cartItemsContainer.querySelectorAll('.remove-item-btn').forEach(button => {
     button.addEventListener('click', (e) => {
-      const productId = parseInt(e.currentTarget.dataset.id);
+      const productId = e.currentTarget.dataset.id; // No convertir a int
       removeProductFromCart(productId);
     });
   });
 
   cartItemsContainer.querySelectorAll('.quantity-btn').forEach(button => {
     button.addEventListener('click', (e) => {
-      const productId = parseInt(e.currentTarget.dataset.id);
+      const productId = e.currentTarget.dataset.id; // No convertir a int
       const change = parseInt(e.currentTarget.dataset.change);
       updateCartItemQuantity(productId, change);
     });
@@ -607,8 +631,16 @@ function createImageGallery(product) {
 // Cargar detalles del producto
 function loadProductDetails() {
   const params = new URLSearchParams(window.location.search);
-  const id = parseInt(params.get("id"));
-  const producto = productos.find((p) => p.id === id);
+  const id = params.get("id"); // No convertir a int, mantener como string
+  
+  // Esperar a que los productos se carguen si no están disponibles
+  if (!productos || productos.length === 0) {
+    setTimeout(loadProductDetails, 100);
+    return;
+  }
+  
+  // Buscar producto comparando IDs como strings
+  const producto = productos.find((p) => String(p.id) === String(id));
   const contenedor = document.getElementById("detalle");
 
   if (producto) {
@@ -771,10 +803,193 @@ function sendWhatsAppProductMessage() {
   window.open(whatsappUrl, '_blank');
 }
 
+// FUNCIONES DE COMENTARIOS
+async function loadProductComments() {
+  if (!currentProduct) return;
+  
+  try {
+    if (window.firestoreManager) {
+      productComments = await window.firestoreManager.getProductComments(currentProduct.id) || [];
+    } else {
+      const commentsKey = `comments_${currentProduct.id}`;
+      productComments = JSON.parse(localStorage.getItem(commentsKey)) || [];
+    }
+  } catch (error) {
+    console.error('Error loading comments:', error);
+    productComments = [];
+  }
+  
+  updateCommentsTitle();
+  renderComments();
+}
+
+function updateCommentsTitle() {
+  const title = document.getElementById('commentsTitle');
+  if (title) {
+    title.textContent = `Comentarios (${productComments.length})`;
+  }
+}
+
+function renderComments() {
+  const container = document.getElementById('commentsList');
+  if (!container) return;
+  
+  if (productComments.length === 0) {
+    container.innerHTML = '<div class="empty-comments">No hay comentarios aún. ¡Sé el primero en comentar!</div>';
+    return;
+  }
+  
+  container.innerHTML = productComments.map(comment => `
+    <div class="comment-item">
+      <div class="comment-header" onclick="showUserProfile('${comment.userId}')">
+        <img class="comment-avatar" src="${comment.userAvatar}" alt="${comment.username}">
+        <div class="comment-user-info">
+          <p class="comment-username">${comment.username}</p>
+          <p class="comment-date">${formatDate(comment.date)}</p>
+        </div>
+      </div>
+      <p class="comment-text">${comment.text}</p>
+    </div>
+  `).join('');
+}
+
+async function postComment() {
+  const input = document.getElementById('commentInput');
+  const text = input.value.trim();
+  
+  if (!text) {
+    alert('Por favor escribe un comentario');
+    return;
+  }
+  
+  // Verificar si el usuario está logueado
+  const currentUser = window.authFunctions?.getCurrentUser?.();
+  if (!currentUser) {
+    alert('Debes iniciar sesión para comentar');
+    return;
+  }
+  
+  const userData = window.authFunctions?.getCurrentUserData?.() || {};
+  
+  const comment = {
+    userId: currentUser.uid,
+    username: userData.displayName || currentUser.email.split('@')[0],
+    userAvatar: userData.photoURL || '/img-galery/user-profile.png',
+    text: text,
+    date: new Date().toISOString()
+  };
+  
+  try {
+    if (window.firestoreManager) {
+      await window.firestoreManager.addProductComment(currentProduct.id, comment);
+    } else {
+      // Fallback a localStorage
+      const commentsKey = `comments_${currentProduct.id}`;
+      const localComments = JSON.parse(localStorage.getItem(commentsKey)) || [];
+      localComments.unshift({...comment, id: Date.now().toString()});
+      localStorage.setItem(commentsKey, JSON.stringify(localComments));
+    }
+    
+    input.value = '';
+    await loadProductComments(); // Recargar comentarios
+  } catch (error) {
+    console.error('Error posting comment:', error);
+    alert('Error al publicar el comentario');
+  }
+}
+
+function showUserProfile(userId) {
+  // Buscar datos del usuario en los comentarios
+  const comment = productComments.find(c => c.userId === userId);
+  if (!comment) return;
+  
+  // Mostrar modal de auth con tabs de perfil y stats
+  const modal = document.getElementById('authModal');
+  const userTabs = document.getElementById('userTabs');
+  const authTabs = document.getElementById('authTabs');
+  const userProfile = document.getElementById('userProfile');
+  const userStats = document.getElementById('userStats');
+  
+  if (modal) {
+    // Ocultar tabs de auth y mostrar tabs de usuario
+    authTabs.style.display = 'none';
+    userTabs.style.display = 'flex';
+    
+    // Mostrar sección de perfil
+    document.querySelectorAll('.auth-form, .user-content').forEach(el => el.style.display = 'none');
+    userProfile.style.display = 'block';
+    
+    // Llenar datos del usuario
+    const profilePic = document.getElementById('userProfilePic');
+    const displayName = document.getElementById('userDisplayNameHeader');
+    const email = document.getElementById('userEmail');
+    const created = document.getElementById('userCreated');
+    const role = document.getElementById('userRole');
+    const totalLikes = document.getElementById('totalLikes');
+    const userLevel = document.getElementById('userLevel');
+    
+    if (profilePic) profilePic.src = comment.userAvatar;
+    if (displayName) displayName.textContent = comment.username;
+    if (email) email.textContent = 'usuario@ejemplo.com';
+    if (created) created.textContent = formatDate(comment.date);
+    if (role) role.textContent = 'Usuario';
+    if (totalLikes) totalLikes.textContent = Math.floor(Math.random() * 50);
+    if (userLevel) userLevel.textContent = Math.floor(Math.random() * 5) + 1;
+    
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeUserProfile() {
+  const modal = document.getElementById('authModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+    
+    // Restaurar estado original del modal
+    const authTabs = document.getElementById('authTabs');
+    const userTabs = document.getElementById('userTabs');
+    if (authTabs) authTabs.style.display = 'flex';
+    if (userTabs) userTabs.style.display = 'none';
+  }
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now - date;
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (days === 0) return 'Hoy';
+  if (days === 1) return 'Ayer';
+  if (days < 7) return `Hace ${days} días`;
+  
+  return date.toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
 // Inicialización cuando se carga la página
 window.addEventListener('DOMContentLoaded', function() {
-  // Cargar detalles del producto
-  loadProductDetails();
+  // Esperar a que los productos se carguen desde data.js
+  if (typeof productos === 'undefined') {
+    // Cargar productos desde el archivo data.js del directorio padre
+    const script = document.createElement('script');
+    script.src = '../data.js';
+    script.onload = () => {
+      setTimeout(() => {
+        loadProductDetails();
+        loadProductComments();
+      }, 500);
+    };
+    document.head.appendChild(script);
+  } else {
+    loadProductDetails();
+    setTimeout(loadProductComments, 500);
+  }
   
   // Inicializar contador del carrito
   updateCartCount();
@@ -807,6 +1022,44 @@ window.addEventListener('DOMContentLoaded', function() {
   if (zoomOverlay) zoomOverlay.addEventListener('click', closeZoomModal);
   if (zoomPrev) zoomPrev.addEventListener('click', () => navigateZoom(-1));
   if (zoomNext) zoomNext.addEventListener('click', () => navigateZoom(1));
+
+  // Event listeners para comentarios
+  const postCommentBtn = document.getElementById('postCommentBtn');
+  if (postCommentBtn) {
+    postCommentBtn.addEventListener('click', postComment);
+  }
+  
+  // Event listeners para modal de auth/perfil
+  const authClose = document.querySelector('.auth-close');
+  if (authClose) {
+    authClose.addEventListener('click', closeUserProfile);
+  }
+  
+  // Tabs del modal de usuario
+  document.querySelectorAll('.user-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      const tabName = this.dataset.tab;
+      
+      // Remover active de todos los tabs
+      document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.user-content').forEach(c => c.style.display = 'none');
+      
+      // Activar tab seleccionado
+      this.classList.add('active');
+      const targetContent = document.getElementById('user' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+      if (targetContent) targetContent.style.display = 'block';
+    });
+  });
+  
+  // Cerrar modal al hacer click fuera
+  const authModal = document.getElementById('authModal');
+  if (authModal) {
+    authModal.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeUserProfile();
+      }
+    });
+  }
 
   // Event listener para búsqueda
   if (searchInput) {

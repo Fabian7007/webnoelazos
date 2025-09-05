@@ -289,7 +289,7 @@
 .product-info h3 {
   margin: 0 0 8px 0;
   font-size: 1.5rem !important;
-  font-weight: 300 !important; /* 100 = muy fino, 300 = ligero, 400 = normal, 700 = bold */
+  font-weight: 300 !important;
   color: #000000;
   height: 2.8em;
   overflow: hidden;
@@ -379,8 +379,9 @@
   }
 
   .product-info h3 {
-    font-size: 1rem !important;
+    font-size: 1.2rem !important;
     height: 2.6em;
+    font-weight: 300 !important;
   }
 
   .product-price {
@@ -433,7 +434,8 @@
   }
 
   .product-info h3 {
-    font-size: 1.1rem !important;
+    font-size: 1.3rem !important;
+    font-weight: 300 !important;
   }
 
   .product-price {
@@ -471,6 +473,7 @@
 
   .product-info h3 {
     font-size: 1.2rem;
+    font-weight: 300 !important;
   }
 
   .product-price {
