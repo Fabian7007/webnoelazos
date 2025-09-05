@@ -151,7 +151,29 @@
       </ul>
     </nav>
 
-    <div class="menu-overlay" id="menuOverlay"></div>
+    <div class="menu-overlay" id="menuOverlay" aria-hidden="true"></div>
+
+    <!-- User Dropdown Menu -->
+    <div id="userDropdown" class="user-dropdown" style="display: none">
+      <div class="user-dropdown-content">
+        <div class="dropdown-item" id="viewProfileBtn">
+          <img src="../img-galery/profile.svg" alt="" class="dropdown-icon" />
+          <span>Ver Perfil</span>
+        </div>
+        <div class="dropdown-item" id="viewNotificationsBtn">
+          <img src="../img-galery/bell.svg" alt="" class="dropdown-icon" />
+          <span>Notificaciones</span>
+        </div>
+        <div class="dropdown-item" id="themeToggleBtn">
+          <img src="../img-galery/moon.svg" alt="" class="dropdown-icon" />
+          <span>Tema Oscuro</span>
+        </div>
+        <div class="dropdown-item logout" id="logoutDropdownBtn">
+          <img src="../img-galery/logout.svg" alt="" class="dropdown-icon" />
+          <span>Cerrar Sesión</span>
+        </div>
+      </div>
+    </div>
 
     <!-- Auth Modal -->
     <div id="authModal" class="auth-modal" style="display: none;">
@@ -807,6 +829,8 @@
     <script type="module" src="../firebase.js"></script>
     <script type="module" src="../firestore-functions.js"></script>
     <script src="../auth.js"></script>
+    <script src="../user-panel-enhanced.js"></script>
+    <script src="../user-panel-config.js"></script>
     
     <!-- Quick Auth Fix -->
     <script>

@@ -20,6 +20,7 @@ function closeAllDropdowns() {
   const mobileMenu = document.getElementById('mobileMenu');
   const searchDropdown = document.getElementById('searchDropdown');
   const cartDropdown = document.getElementById('cartDropdown');
+  const userDropdown = document.getElementById('userDropdown');
   const menuOverlay = document.getElementById('menuOverlay');
   const menuToggle = document.getElementById('menuToggle');
 
@@ -31,6 +32,9 @@ function closeAllDropdowns() {
   }
   if (cartDropdown && cartDropdown.classList.contains('active')) {
     cartDropdown.classList.remove('active');
+  }
+  if (userDropdown && userDropdown.classList.contains('show')) {
+    userDropdown.classList.remove('show');
   }
   if (menuOverlay && menuOverlay.classList.contains('active')) {
     menuOverlay.classList.remove('active');
@@ -686,7 +690,7 @@ function loadProductDetails() {
               <button class="quantity-btn" data-action="minus" onclick="updateQuantity(-1)">-</button>
               <input type="number" id="quantityInput" class="quantity-input" value="1" min="1" max="99" readonly>
               <button class="quantity-btn" data-action="plus" onclick="updateQuantity(1)">+</button>
-              <button class="quantity-icon-btn" onclick="addProductToCart(${producto.id})" aria-label="Agregar al carrito">
+              <button class="quantity-icon-btn" onclick="addProductToCart('${producto.id}')" aria-label="Agregar al carrito">
                 <i class="fas fa-shopping-cart"></i>
               </button>
             </div>
@@ -809,11 +813,12 @@ async function loadProductComments() {
   
   try {
     if (window.firestoreManager) {
-      productComments = await window.firestoreManager.getProductComments(currentProduct.id) || [];
+      productComments = await window.firestoreManager.getProductComments(String(currentProduct.id)) || [];
     } else {
       const commentsKey = `comments_${currentProduct.id}`;
       productComments = JSON.parse(localStorage.getItem(commentsKey)) || [];
     }
+    console.log('Loaded comments:', productComments.length);
   } catch (error) {
     console.error('Error loading comments:', error);
     productComments = [];
@@ -839,18 +844,21 @@ function renderComments() {
     return;
   }
   
-  container.innerHTML = productComments.map(comment => `
-    <div class="comment-item">
-      <div class="comment-header" onclick="showUserProfile('${comment.userId}')">
-        <img class="comment-avatar" src="${comment.userAvatar}" alt="${comment.username}">
-        <div class="comment-user-info">
-          <p class="comment-username">${comment.username}</p>
-          <p class="comment-date">${formatDate(comment.date)}</p>
+  container.innerHTML = productComments.map(comment => {
+    const commentDate = comment.createdAt ? new Date(comment.createdAt.seconds * 1000) : new Date(comment.date);
+    return `
+      <div class="comment-item">
+        <div class="comment-header" onclick="showUserProfile('${comment.userId}')">
+          <img class="comment-avatar" src="${comment.userAvatar}" alt="${comment.username}">
+          <div class="comment-user-info">
+            <p class="comment-username">${comment.username}</p>
+            <p class="comment-date">${formatDate(commentDate.toISOString())}</p>
+          </div>
         </div>
+        <p class="comment-text">${comment.text}</p>
       </div>
-      <p class="comment-text">${comment.text}</p>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 async function postComment() {
@@ -881,7 +889,8 @@ async function postComment() {
   
   try {
     if (window.firestoreManager) {
-      await window.firestoreManager.addProductComment(currentProduct.id, comment);
+      await window.firestoreManager.addProductComment(String(currentProduct.id), comment);
+      console.log('Comment posted successfully');
     } else {
       // Fallback a localStorage
       const commentsKey = `comments_${currentProduct.id}`;
@@ -891,10 +900,13 @@ async function postComment() {
     }
     
     input.value = '';
-    await loadProductComments(); // Recargar comentarios
+    // Recargar comentarios después de un breve delay
+    setTimeout(async () => {
+      await loadProductComments();
+    }, 500);
   } catch (error) {
     console.error('Error posting comment:', error);
-    alert('Error al publicar el comentario');
+    alert('Error al enviar el comentario');
   }
 }
 
@@ -1003,6 +1015,81 @@ window.addEventListener('DOMContentLoaded', function() {
   const checkoutBtn = document.querySelector('.checkout-btn');
   const menuOverlay = document.getElementById('menuOverlay');
   const searchInput = document.getElementById('searchInput');
+  
+  // Event listeners para el menú desplegable del usuario
+  const accountToggle = document.querySelector('.account-toggle');
+  const userDropdown = document.getElementById('userDropdown');
+  
+  if (accountToggle && userDropdown) {
+    accountToggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      userDropdown.classList.toggle('show');
+    });
+    
+    // Cerrar dropdown al hacer click fuera
+    document.addEventListener('click', function() {
+      userDropdown.classList.remove('show');
+    });
+    
+    // Event listeners para los items del dropdown
+    const viewProfileBtn = document.getElementById('viewProfileBtn');
+    const viewNotificationsBtn = document.getElementById('viewNotificationsBtn');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const logoutDropdownBtn = document.getElementById('logoutDropdownBtn');
+    
+    if (viewProfileBtn) {
+      viewProfileBtn.addEventListener('click', function() {
+        userDropdown.classList.remove('show');
+        // Mostrar modal de perfil
+        const authModal = document.getElementById('authModal');
+        if (authModal) {
+          authModal.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+          // Mostrar sección de perfil si el usuario está logueado
+          if (window.authFunctions && window.authFunctions.getCurrentUser()) {
+            window.authFunctions.showUserProfile();
+          }
+        }
+      });
+    }
+    
+    if (viewNotificationsBtn) {
+      viewNotificationsBtn.addEventListener('click', function() {
+        userDropdown.classList.remove('show');
+        // Mostrar notificaciones
+        const authModal = document.getElementById('authModal');
+        if (authModal) {
+          authModal.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+          // Cambiar a tab de notificaciones
+          const userTabs = document.getElementById('userTabs');
+          const authTabs = document.getElementById('authTabs');
+          if (userTabs && authTabs) {
+            authTabs.style.display = 'none';
+            userTabs.style.display = 'flex';
+            // Activar tab de notificaciones
+            document.querySelectorAll('.user-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.user-content').forEach(c => c.style.display = 'none');
+            const notifTab = document.querySelector('[data-tab="notifications"]');
+            const notifContent = document.getElementById('userNotifications');
+            if (notifTab && notifContent) {
+              notifTab.classList.add('active');
+              notifContent.style.display = 'block';
+            }
+          }
+        }
+      });
+    }
+    
+    if (logoutDropdownBtn) {
+      logoutDropdownBtn.addEventListener('click', function() {
+        userDropdown.classList.remove('show');
+        if (window.authFunctions && window.authFunctions.logout) {
+          window.authFunctions.logout();
+        }
+      });
+    }
+  }
 
   if (menuToggle) menuToggle.addEventListener('click', toggleMenu);
   if (searchToggle) searchToggle.addEventListener('click', toggleSearch);
