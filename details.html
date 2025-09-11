@@ -34,40 +34,14 @@
 
     <link rel="stylesheet" href="admin-products/admin-products.css" />
     <link rel="stylesheet" href="notifications.css" />
+    <link rel="stylesheet" href="details.css" />
+    <link rel="stylesheet" href="comments.css" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/img-galery/logo.svg" />
     <link rel="alternate icon" href="/favicon.ico" />
-
-    <!-- Preload critical resources -->
-    <link
-      rel="preload"
-      href="/img-galery/logo.svg"
-      as="image"
-      type="image/svg+xml"
-    />
   </head>
-  <body class="loading">
-    <!-- Initial Loading Screen -->
-    <div class="initial-loader" role="status" aria-label="Cargando contenido">
-      <div class="logo-container">
-        <img
-          class="loader-logo"
-          src="img-galery/logo.svg"
-          alt="Logo de Accesorios"
-        />
-        <div class="loader-text" aria-live="polite">Cargando productos...</div>
-        <div
-          class="loader-progress"
-          role="progressbar"
-          aria-valuemin="0"
-          aria-valuemax="100"
-        >
-          <div class="loader-progress-bar"></div>
-        </div>
-      </div>
-    </div>
-
+  <body>
     <!-- Main Header -->
     <header class="header" role="banner">
       <div class="header-content">
@@ -195,9 +169,7 @@
       <ul class="menu-list" role="list">
         <li role="listitem">
           <a
-            href="#inicio"
-            data-section="inicio"
-            onclick="showSection('inicio')"
+            href="index.html#inicio"
             aria-label="Ir a la sección de inicio"
             class="menu-link"
           >
@@ -206,9 +178,7 @@
         </li>
         <li role="listitem">
           <a
-            href="#lazos"
-            data-section="lazos"
-            onclick="showSection('lazos')"
+            href="index.html#lazos"
             aria-label="Ir a la sección de lazos"
             class="menu-link"
           >
@@ -217,9 +187,7 @@
         </li>
         <li role="listitem">
           <a
-            href="#monos"
-            data-section="monos"
-            onclick="showSection('monos')"
+            href="index.html#monos"
             aria-label="Ir a la sección de moños"
             class="menu-link"
           >
@@ -228,9 +196,7 @@
         </li>
         <li role="listitem">
           <a
-            href="#colitas"
-            data-section="colitas"
-            onclick="showSection('colitas')"
+            href="index.html#colitas"
             aria-label="Ir a la sección de colitas"
             class="menu-link"
           >
@@ -239,9 +205,7 @@
         </li>
         <li role="listitem">
           <a
-            href="#scrunchies"
-            data-section="scrunchies"
-            onclick="showSection('scrunchies')"
+            href="index.html#scrunchies"
             aria-label="Ir a la sección de scrunchies"
             class="menu-link"
           >
@@ -250,9 +214,7 @@
         </li>
         <li role="listitem">
           <a
-            href="#setmonos"
-            data-section="setmonos"
-            onclick="showSection('setmonos')"
+            href="index.html#setmonos"
             aria-label="Ir a la sección de set de moños"
             class="menu-link"
           >
@@ -1027,227 +989,31 @@
       </div>
     </div>
 
-    <!-- Products Loading Indicator -->
-    <div class="products-loading" id="productsLoading" style="display: none">
-      <div class="products-loading-content">
-        <div class="products-loading-spinner"></div>
-        <p>Cargando productos</p>
+    <!-- Main Container -->
+    <div class="container">
+      <!-- PRESENTACION DEL PRODUCTO DETALLE -->
+      <div class="product-detail-container">
+        <div class="product-detail-header">
+          <button class="back-btn" onclick="goBack()">
+            <img src="img-galery/arrow-backicon.svg" alt="Volver" />
+            Volver
+          </button>
+        </div>
+
+        <div class="product-detail-content" id="productDetailContent">
+          <div class="product-loading">
+            <div class="loading-spinner"></div>
+            <p>Cargando producto...</p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Main Container -->
-    <div class="container">
-      <!-- Section Title -->
-      <div class="section-title-wrapper">
-        <div class="title-header">
-          <button
-            id="backButton"
-            class="back-button"
-            onclick="goBackFromSearch()"
-            style="display: none"
-            aria-label="Volver a la sección anterior"
-          >
-            <img
-              src="img-galery/arrow-backicon.svg"
-              alt="Volver"
-              class="back-icon"
-            />
-            Volver
-          </button>
-          <h1 class="section-title" id="sectionTitle">Productos Destacados</h1>
-        </div>
-        <p
-          class="search-term-display"
-          id="searchTermDisplay"
-          aria-live="polite"
-        ></p>
-        <div class="title-underline" aria-hidden="true"></div>
+    <!-- Subfooter with Comments -->
+    <div class="subfooter">
+      <div class="comments-section" id="commentsSection">
+        <!-- Comments will be loaded here -->
       </div>
-
-      <!-- Carousel Section -->
-      <section
-        id="carousel-section"
-        class="section"
-        style="display: block"
-        aria-label="Carrusel de productos destacados"
-      >
-        <div class="carousel-boundary-container">
-          <div
-            id="carousel-announcer"
-            class="visually-hidden"
-            aria-live="polite"
-            aria-atomic="true"
-          ></div>
-          <div class="minimal-carousel-container">
-            <div class="carousel-wrapper">
-              <button
-                class="minimal-carousel-nav prev"
-                id="minimalCarouselPrev"
-                aria-label="Producto anterior"
-                type="button"
-              >
-                <i class="fas fa-chevron-left" aria-hidden="true"></i>
-              </button>
-
-              <ul
-                class="minimal-carousel-track"
-                id="minimalCarouselTrack"
-                role="region"
-                aria-label="Productos en carrusel"
-                aria-live="polite"
-              ></ul>
-
-              <button
-                class="minimal-carousel-nav next"
-                id="minimalCarouselNext"
-                aria-label="Siguiente producto"
-                type="button"
-              >
-                <i class="fas fa-chevron-right" aria-hidden="true"></i>
-              </button>
-            </div>
-
-            <div
-              class="minimal-carousel-indicators"
-              id="minimalCarouselIndicators"
-              role="tablist"
-              aria-label="Indicadores de productos"
-            ></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Admin Add Product Button -->
-      <div class="admin-controls" id="adminControls" style="display: none">
-        <button id="addProductBtn" class="add-product-btn">
-          <img
-            src="img-galery/cloud.svg"
-            alt=""
-            style="
-              width: 20px;
-              height: 20px;
-              margin-right: 8px;
-              filter: brightness(0) invert(1);
-            "
-          />
-          Agregar Producto
-        </button>
-      </div>
-
-      <!-- Section Add Product Button -->
-      <div
-        class="section-admin-controls"
-        id="sectionAddProductBtn"
-        style="display: none"
-      >
-        <button
-          class="add-product-btn"
-          onclick="window.adminFunctions?.showAddProductModal()"
-        >
-          <img
-            src="img-galery/cloud.svg"
-            alt=""
-            style="
-              width: 20px;
-              height: 20px;
-              margin-right: 8px;
-              filter: brightness(0) invert(1);
-            "
-          />
-          Agregar Producto
-        </button>
-      </div>
-
-      <!-- Filters Bar -->
-      <div
-        class="filters-bar"
-        id="mainFiltersBar"
-        role="toolbar"
-        aria-label="Filtros de productos"
-      >
-        <div class="filters">
-          <select id="statusFilter" aria-label="Filtrar productos por estado">
-            <option value="">Filtrar por estado</option>
-            <option value="nuevo">Nuevos</option>
-            <option value="oferta">En Oferta</option>
-            <option value="agotado">Agotados</option>
-          </select>
-          <select id="colorFilter" aria-label="Filtrar productos por color">
-            <option value="">Filtrar por color</option>
-            <option value="Rosa">Rosa</option>
-            <option value="Azul">Azul</option>
-            <option value="Rojo">Rojo</option>
-            <option value="Amarillo">Amarillo</option>
-            <option value="Blanco">Blanco</option>
-            <option value="Gris">Gris</option>
-            <option value="Negro">Negro</option>
-            <option value="Verde">Verde</option>
-            <option value="Dorado">Dorado</option>
-            <option value="Plateado">Plateado</option>
-            <option value="Multicolor">Multicolor</option>
-            <option value="Naranja">Naranja</option>
-            <option value="Púrpura">Púrpura</option>
-          </select>
-          <select
-            id="telaFilter"
-            aria-label="Filtrar productos por tipo de tela"
-          >
-            <option value="">Filtrar por tela</option>
-            <option value="Seda">Seda</option>
-            <option value="Algodón">Algodón</option>
-            <option value="Gamuza">Gamuza</option>
-            <option value="Lana">Lana</option>
-            <option value="Sintético">Sintético</option>
-            <option value="Terciopelo">Terciopelo</option>
-            <option value="Licra">Licra</option>
-            <option value="Poliéster">Poliéster</option>
-          </select>
-          <button
-            id="clearFilters"
-            class="clear-btn"
-            type="button"
-            aria-label="Limpiar todos los filtros"
-          >
-            Limpiar filtros
-          </button>
-        </div>
-      </div>
-
-      <!-- Main Content -->
-      <main class="main-content" role="main">
-        <section
-          id="inicio"
-          class="section active"
-          aria-label="Sección de inicio"
-        ></section>
-        <section
-          id="lazos"
-          class="section"
-          aria-label="Sección de lazos"
-        ></section>
-        <section
-          id="monos"
-          class="section"
-          aria-label="Sección de moños"
-        ></section>
-        <section
-          id="colitas"
-          class="section"
-          aria-label="Sección de colitas"
-        ></section>
-        <section
-          id="scrunchies"
-          class="section"
-          aria-label="Sección de scrunchies"
-        ></section>
-        <section
-          id="setmonos"
-          class="section"
-          aria-label="Sección de set de moños"
-        ></section>
-
-        <div class="info-footer" id="infoFooter" role="contentinfo"></div>
-      </main>
     </div>
 
     <!-- Footer -->
@@ -1319,185 +1085,31 @@
     <script src="notification-system.js"></script>
     <script src="notifications-manager.js"></script>
     <script type="module" src="firestore-functions.js"></script>
+    <script src="login/auth.js"></script>
     <script src="user-settings-loader.js"></script>
-    <script src="fix-privacy-settings.js"></script>
-    <script src="verify-privacy-settings.js"></script>
-    <script type="module" src="likes-realtime.js"></script>
     <script type="module" src="user-activity-realtime.js"></script>
+    <script type="module" src="admin-sync.js"></script>
+    <script src="setup-admin.js"></script>
+    <script type="module" src="comments-realtime.js"></script>
+    <script src="userpanel/user-panel-config.js"></script>
+    <script type="module" src="likes-realtime.js"></script>
     <script src="content/content.js"></script>
     <script src="script.js"></script>
-    <script src="login/auth.js"></script>
-    <script src="userpanel/user-panel-config.js"></script>
     <script src="userpanel/edit-profile-panel.js"></script>
     <script src="admin-products/admin-products.js"></script>
-    <script src="setup-carousel-admin.js"></script>
+    <script src="details.js"></script>
+    <script src="fix-privacy-settings.js"></script>
+    <script src="verify-privacy-settings.js"></script>
+    <script src="fix-products.js"></script>
     <script src="debug-products.js"></script>
+    <script src="test-firebase.js"></script>
+    <script src="test-rules.js"></script>
+    <script src="test-detail-images.js"></script>
+    <script src="debug-comments.js"></script>
     <script src="test-activity-indicators.js"></script>
     <script src="fix-activity-defaults.js"></script>
     <script src="force-activity-indicators.js"></script>
     <script src="force-notifications.js"></script>
     <script src="test-notifications.js"></script>
-
-    <!-- Enhanced Loading and Initialization Script -->
-    <script>
-      // Error handling wrapper
-      function safeExecute(fn, errorContext = "Unknown") {
-        try {
-          return fn();
-        } catch (error) {
-          console.error(`Error in ${errorContext}:`, error);
-          return null;
-        }
-      }
-
-      // Initial loading screen with improved progress simulation
-      document.addEventListener("DOMContentLoaded", () => {
-        // Check if the site has been loaded once in this session
-        if (sessionStorage.getItem("siteLoadedOnce")) {
-          // If so, hide loaders immediately without animations
-          document.body.classList.remove("loading");
-          const initialLoader = document.querySelector(".initial-loader");
-          if (initialLoader) {
-            initialLoader.style.display = "none";
-          }
-        } else {
-          // This is the first visit in the session, show the loaders and animations.
-          safeExecute(() => {
-            const progressBar = document.querySelector(".loader-progress-bar");
-            const loaderText = document.querySelector(".loader-text");
-
-            if (progressBar && loaderText) {
-              let progress = 0;
-              const messages = [
-                "Cargando productos...",
-                "Preparando carrusel...",
-                "Configurando filtros...",
-                "Casi listo...",
-              ];
-              let messageIndex = 0;
-
-              const interval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress > 100) progress = 100;
-
-                progressBar.style.width = progress + "%";
-                progressBar.setAttribute("aria-valuenow", Math.round(progress));
-
-                if (
-                  progress > messageIndex * 25 &&
-                  messageIndex < messages.length
-                ) {
-                  loaderText.textContent = messages[messageIndex];
-                  messageIndex++;
-                }
-
-                if (progress >= 100) {
-                  clearInterval(interval);
-                  loaderText.textContent = "¡Listo!";
-                  setTimeout(() => {
-                    const initialLoader =
-                      document.querySelector(".initial-loader");
-                    if (initialLoader) {
-                      initialLoader.classList.add("fade-out");
-                      initialLoader.setAttribute("aria-hidden", "true");
-                      setTimeout(() => {
-                        initialLoader.style.display = "none";
-                      }, 800);
-                    }
-                  }, 500);
-                }
-              }, 100);
-            }
-          }, "Initial loader setup");
-
-          // Set the flag so this doesn't run again in this session
-          sessionStorage.setItem("siteLoadedOnce", "true");
-
-          // Force remove loading after animation
-          setTimeout(() => {
-            document.body.classList.remove("loading");
-          }, 1500);
-        }
-      });
-
-      // Force initialization after load
-      window.addEventListener("load", function () {
-        console.log("🚀 Window loaded, forcing initialization...");
-
-        // Force remove loading class
-        document.body.classList.remove("loading");
-
-        // Force show inicio section
-        if (window.showSection) {
-          window.showSection("inicio");
-        }
-
-        // Try carousel initialization
-        safeExecute(() => {
-          if (window.handleMinimalCarouselSectionChange) {
-            window.handleMinimalCarouselSectionChange("inicio");
-          }
-        }, "Carousel initialization");
-      });
-
-      // Enhanced error handling for images
-      function handleImageError(
-        img,
-        fallbackSrc = "/img-galery/placeholder.jpg"
-      ) {
-        if (img && img.src !== fallbackSrc) {
-          img.onerror = null; // Prevent infinite loop
-          img.src = fallbackSrc;
-          img.classList.add("image-error");
-          img.setAttribute(
-            "alt",
-            img.getAttribute("alt") + " (imagen no disponible)"
-          );
-        }
-      }
-
-      // Global error handler
-      window.addEventListener("error", function (e) {
-        if (e.target && e.target.tagName === "IMG") {
-          handleImageError(e.target);
-        }
-        console.error("Global error:", e.error);
-      });
-
-      // Unhandled promise rejection handler
-      window.addEventListener("unhandledrejection", function (e) {
-        console.error("Unhandled promise rejection:", e.reason);
-      });
-
-      // Performance monitoring (optional)
-      if ("performance" in window) {
-        window.addEventListener("load", function () {
-          setTimeout(function () {
-            const perfData = performance.getEntriesByType("navigation")[0];
-            if (perfData) {
-              console.log(
-                "Page load time:",
-                perfData.loadEventEnd - perfData.loadEventStart,
-                "ms"
-              );
-            }
-          }, 0);
-        });
-      }
-
-      // Service worker registration (optional, for future PWA support)
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", function () {
-          // Uncomment when you have a service worker
-          // navigator.serviceWorker.register('/sw.js')
-          //   .then(function(registration) {
-          //     console.log('SW registered: ', registration);
-          //   })
-          //   .catch(function(registrationError) {
-          //     console.log('SW registration failed: ', registrationError);
-          //   });
-        });
-      }
-    </script>
   </body>
 </html>

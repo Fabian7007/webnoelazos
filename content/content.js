@@ -1,844 +1,673 @@
-// Minimal Carousel - Versión optimizada y corregida
-class MinimalProductCarousel {
+// Carrusel Fullwidth con navegación manual
+class FullwidthCarousel {
   constructor() {
     this.currentSlide = 0;
     this.slides = [];
-    this.itemElements = []; // Almacenará los elementos del DOM del carrusel
-    this.isInitialized = false;
-    this.isMobile = window.innerWidth <= 768;
-    this.isTablet = window.innerWidth > 768 && window.innerWidth <= 1024;
     this.isAnimating = false;
-    
-    // Bind methods
-    this.handleResize = this.handleResize.bind(this);
-    this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
-    this.handleKeydown = this.handleKeydown.bind(this);
-    this.handleTouchStart = this.handleTouchStart.bind(this);
-    this.handleTouchMove = this.handleTouchMove.bind(this);
-    this.handleTouchEnd = this.handleTouchEnd.bind(this);
-    this.nextSlide = this.nextSlide.bind(this);
-    this.prevSlide = this.prevSlide.bind(this);
-    this.goToSlide = this.goToSlide.bind(this);
-    
-    // Touch variables
-    this.touchStartX = 0;
-    this.touchStartY = 0;
-    this.touchCurrentX = 0;
-    this.isDragging = false;
-    this.touchThreshold = 50; // Minimum distance for swipe
-    
-    // Esperar a que los productos estén disponibles
-    this.waitForProducts();
+    this.carouselProducts = JSON.parse(localStorage.getItem('carouselProducts')) || [];
+    this.selectionOrder = JSON.parse(localStorage.getItem('carouselSelectionOrder')) || [];
+    this.originalProducts = [];
+    this.originalOrder = [];
+    this.autoPlay = false;
+    this.autoPlayInterval = null;
+    this.init();
   }
 
-  waitForProducts() {
-    const checkProducts = () => {
-      // Ensure 'productos' is defined and has items
-      if (typeof productos !== 'undefined' && productos.length > 0) {
-        this.init();
-      } else {
-        setTimeout(checkProducts, 200);
+  async init() {
+    if (window.productos && window.productos.length > 0) {
+      await this.initializeCarouselInDatabase();
+      await this.loadCarouselProducts();
+      this.createCarousel();
+      this.bindEvents();
+      console.log('✅ Carrusel fullwidth inicializado con', this.slides.length, 'productos');
+    }
+  }
+
+  async initializeCarouselInDatabase() {
+    if (window.firestoreManager && window.firestoreManager.getDocument) {
+      try {
+        const doc = await window.firestoreManager.getDocument('settings', 'carousel');
+        if (!doc.exists()) {
+          // Crear documento vacío en Firestore
+          const initialData = {
+            products: [],
+            selectionOrder: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          await window.firestoreManager.setDocument('settings', 'carousel', initialData);
+          console.log('Carrusel inicializado en Firestore');
+        }
+      } catch (error) {
+        console.error('Error inicializando carrusel en Firestore:', error);
       }
-    };
-    checkProducts();
-  }
-
-  init() {
-    if (this.isInitialized) return;
-    
-    console.log('Inicializando carrusel minimalista con', productos.length, 'productos');
-    
-    // Seleccionar productos destacados para el carrusel
-    this.selectFeaturedProducts();
-    if (this.slides.length === 0) {
-      console.warn('No hay productos destacados para el carrusel. Inicialización abortada.');
-      return;
-    }
-    
-    this.createCarouselElements();
-    this.setupEventListeners();
-    this.setupGlobalEventListeners();
-    this.setupTouchEvents();
-    
-    this.isInitialized = true;
-    console.log('Carrusel minimalista inicializado exitosamente');
-  }
-
-  selectFeaturedProducts() {
-    // Seleccionar productos variados para el carrusel
-    const categories = ['lazos', 'monos', 'scrunchies', 'setmonos', 'colitas'];
-    this.slides = [];
-    
-    // Obtener 2 productos de cada categoría, máximo 10 productos
-    categories.forEach(category => {
-      const categoryProducts = productos.filter(p => p.categoria === category).slice(0, 2);
-      this.slides.push(...categoryProducts);
-    });
-    
-    // Si tenemos menos de 6 productos, agregar más de cualquier categoría hasta 10
-    if (this.slides.length < 6) {
-      const existingProductIds = new Set(this.slides.map(p => p.id));
-      const remainingProducts = productos.filter(p => !existingProductIds.has(p.id));
-      this.slides.push(...remainingProducts.slice(0, 10 - this.slides.length));
-    }
-    
-    // Limitar a 10 productos máximo
-    this.slides = this.slides.slice(0, 10);
-    
-    console.log('Productos seleccionados para carrusel:', this.slides.length);
-  }
-
-  createCarouselElements() {
-    this.createCarouselShell();
-    this.createIndicators();
-    this.updateCurrentSlide();
-  }
-
-  createCarouselShell() {
-    const trackElement = document.getElementById('minimalCarouselTrack');
-    if (!trackElement) {
-      console.error('Carousel track not found');
-      return;
-    }
-
-    trackElement.innerHTML = ''; // Limpiar solo una vez
-    this.itemElements = []; // Limpiar array de elementos
-    const itemsToShow = this.getItemsToShow();
-
-    for (let i = 0; i < itemsToShow; i++) {
-      const item = document.createElement('li'); // Use list item for semantics
-      item.className = 'minimal-carousel-item';
-      item.innerHTML = `
-        <img src="" alt="" loading="lazy" onerror="this.src='/img-galery/placeholder.jpg'">
-        <div class="product-info-overlay">
-          <h3></h3>
-          <p></p>
-          <button class="view-details-btn">Ver Detalles</button>
-        </div>
-        <div class="quick-view-overlay">
-          <button class="quick-view-btn">Ver</button>
-        </div>
-        <div class="carousel-counter"></div>
-      `;
-      trackElement.appendChild(item);
-      this.itemElements.push(item);
     }
   }
 
-  updateView() {
-    if (this.slides.length === 0 || this.itemElements.length === 0) return;
-
-    const itemsToShow = this.getItemsToShow();
-    const centerIndex = Math.floor(itemsToShow / 2);
-
-    this.itemElements.forEach((item, i) => {
-      const productIndex = (this.currentSlide - centerIndex + i + this.slides.length * 3) % this.slides.length;
-      const product = this.slides[productIndex];
-
-      if (!product) {
-        item.style.display = 'none';
-        return;
+  async loadCarouselProducts() {
+    // Solo cargar desde Firestore (base de datos en la nube)
+    if (window.firestoreManager && window.firestoreManager.getDocument) {
+      try {
+        const doc = await window.firestoreManager.getDocument('settings', 'carousel');
+        if (doc.exists()) {
+          const data = doc.data();
+          this.carouselProducts = data.products || [];
+          this.selectionOrder = data.selectionOrder || [];
+          console.log('Carrusel cargado desde Firestore:', this.carouselProducts);
+        } else {
+          // Si no existe el documento, crear uno vacío
+          this.carouselProducts = [];
+          this.selectionOrder = [];
+        }
+      } catch (error) {
+        console.error('Error cargando carrusel desde Firestore:', error);
+        this.carouselProducts = [];
+        this.selectionOrder = [];
       }
-      item.style.display = 'flex';
-
-      // 1. Actualizar clases para estilos y animaciones
-      item.classList.remove('main', 'side', 'far');
-      item.removeAttribute('aria-current');
-      item.setAttribute('tabindex', '-1'); // Not focusable by default
-
-      if (i === centerIndex) {
-        item.classList.add('main');
-        item.setAttribute('aria-current', 'true');
-        item.setAttribute('tabindex', '0'); // The main item is focusable
-      } else if (Math.abs(i - centerIndex) === 1) {
-        item.classList.add('side');
-      } else {
-        item.classList.add('far');
-      }
-      // 2. Actualizar contenido del item
-      const img = item.querySelector('img');
-      const h3 = item.querySelector('h3');
-      const p = item.querySelector('p');
-      const viewDetailsBtn = item.querySelector('.view-details-btn');
-      const quickViewBtn = item.querySelector('.quick-view-btn');
-      const counter = item.querySelector('.carousel-counter');
-      // Actualizar solo si es necesario para evitar reflows
-      if (img.src !== product.imagen) {
-        img.src = product.imagen;
-      }
-      img.alt = product.nombre;
-      h3.textContent = product.nombre;
-      p.textContent = `$${product.precio.toLocaleString('es-AR')}`;
-      counter.textContent = `${productIndex + 1}/${this.slides.length}`;
-
-      // 3. Actualizar data-attributes para event delegation
-      item.dataset.productId = product.id;
-      item.setAttribute('role', 'group'); // ARIA role for slide
-      item.setAttribute('aria-label', `Diapositiva ${productIndex + 1} de ${this.slides.length}: ${product.nombre}`);
-      item.dataset.productIndex = productIndex;
-      viewDetailsBtn.dataset.productId = product.id;
-      quickViewBtn.dataset.productId = product.id;
-
-
-    });
-  }
-
-  getItemsToShow() {
-    if (this.isMobile) return 3; // Mobile: elemento central + 2 elementos laterales
-    if (this.isTablet) return 3; // Tablet: igual que mobile
-    return 5; // Desktop: elemento central + 4 elementos laterales
-  }
-
-  createIndicators() {
-    const indicatorsContainer = document.getElementById('minimalCarouselIndicators');
-    if (!indicatorsContainer) {
-      console.error('Indicators container not found');
-      return;
-    }
-    
-    indicatorsContainer.innerHTML = '';
-    
-    this.slides.forEach((product, index) => {
-      const indicator = document.createElement('button');
-      indicator.className = `minimal-indicator ${index === 0 ? 'active' : ''}`;
-      indicator.setAttribute('aria-label', `Ir a producto ${index + 1}: ${product.nombre}`);
-      indicator.setAttribute('data-index', index);
-      indicator.setAttribute('tabindex', '0');
-      
-      indicator.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.goToSlide(index);
-        this.trackCarouselInteraction('indicator_click', product.id, index);
-      });
-      
-      indicatorsContainer.appendChild(indicator);
-    });
-  }
-
-  setupEventListeners() {
-    const prevBtn = document.getElementById('minimalCarouselPrev');
-    const nextBtn = document.getElementById('minimalCarouselNext');
-    const track = document.getElementById('minimalCarouselTrack');
-    const indicatorsContainer = document.getElementById('minimalCarouselIndicators');
-
-    // Botones de navegación
-    if (prevBtn) {
-      prevBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.prevSlide();
-        this.trackCarouselInteraction('prev_button_click');
-      });
     } else {
-      console.warn('Previous button not found');
+      this.carouselProducts = [];
+      this.selectionOrder = [];
+    }
+    
+    // Mapear productos
+    if (this.carouselProducts.length > 0) {
+      this.slides = this.carouselProducts.map(id => 
+        window.productos.find(p => p.id === id)
+      ).filter(Boolean);
+    } else {
+      this.slides = [];
+    }
+  }
+
+  createCarousel() {
+    const carouselSection = document.getElementById('carousel-section');
+    if (!carouselSection) return;
+
+    const isAdmin = this.checkAdminStatus();
+    
+    if (this.slides.length === 0) {
+      carouselSection.innerHTML = `
+        <div class="fullwidth-carousel carousel-empty">
+          ${isAdmin ? '<button class="carousel-admin-btn" id="carouselAdminBtn"><i class="fas fa-edit"></i></button>' : ''}
+          <div>Vacío</div>
+        </div>
+      `;
+    } else {
+      carouselSection.innerHTML = `
+        <div class="fullwidth-carousel">
+          <div class="carousel-container">
+            ${isAdmin ? '<button class="carousel-admin-btn" id="carouselAdminBtn"><i class="fas fa-edit"></i></button>' : ''}
+            <button class="carousel-auto-play" id="autoPlayBtn" title="Reproducción automática">
+              <i class="fas fa-play"></i>
+            </button>
+            <div class="carousel-track" id="carouselTrack">
+              ${this.slides.map((product, index) => this.createSlide(product, index, isAdmin)).join('')}
+            </div>
+            <button class="carousel-nav prev" id="prevBtn">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="carousel-nav next" id="nextBtn">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <div class="carousel-indicators" id="indicators">
+              ${this.slides.map((_, index) => `
+                <button class="carousel-indicator ${index === 0 ? 'active' : ''}" data-slide="${index}"></button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (isAdmin) {
+      this.createAdminModal();
+    }
+    this.updateCarousel();
+  }
+
+  checkAdminStatus() {
+    const currentUser = window.authFunctions?.getCurrentUser();
+    if (!currentUser) return false;
+    
+    const userData = window.authFunctions?.getCurrentUserData();
+    return userData && userData.role === 'administrador';
+  }
+
+  createSlide(product, index, isAdmin = false) {
+    return `
+      <div class="carousel-slide" style="background-image: url('${product.imagen}')">
+        <div class="carousel-slide-overlay"></div>
+        <div class="carousel-slide-number">${index + 1} / ${this.slides.length}</div>
+        <div class="carousel-progress" style="width: ${((index + 1) / this.slides.length) * 100}%"></div>
+        ${isAdmin ? `
+          <div class="slide-admin-controls">
+            <button class="slide-remove-btn" onclick="fullwidthCarousel.removeSlide(${index})">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        ` : ''}
+        <div class="slide-content">
+          <h3>${product.nombre}</h3>
+          <p>$${product.precio?.toLocaleString('es-AR') || '0'}</p>
+          <button class="slide-btn" onclick="console.log('Navegando desde carrusel a:', '${product.id}'); window.location.href='details.html?id=${encodeURIComponent(product.id)}'">
+            Ver Producto
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  bindEvents() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const indicators = document.getElementById('indicators');
+    const adminBtn = document.getElementById('carouselAdminBtn');
+    const autoPlayBtn = document.getElementById('autoPlayBtn');
+    const carousel = document.querySelector('.fullwidth-carousel');
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        this.stopAutoPlay();
+        this.prevSlide();
+      });
     }
 
     if (nextBtn) {
-      nextBtn.addEventListener('click', (e) => {
-        e.preventDefault();
+      nextBtn.addEventListener('click', () => {
+        this.stopAutoPlay();
         this.nextSlide();
-        this.trackCarouselInteraction('next_button_click');
       });
-    } else {
-      console.warn('Next button not found');
     }
 
-    // Event Delegation para clicks en los items
-    if (track) {
-      track.addEventListener('click', (e) => {
-        const item = e.target.closest('.minimal-carousel-item');
-        if (!item) return;
-
-        e.preventDefault();
-        const productId = parseInt(item.dataset.productId, 10);
-        const productIndex = parseInt(item.dataset.productIndex, 10);
-
-        if (e.target.closest('.view-details-btn') || e.target.closest('.quick-view-btn')) {
-          this.openProductDetails(productId);
-          this.trackCarouselInteraction('button_click', productId, productIndex);
-        } else if (item.classList.contains('main')) {
-          this.openProductDetails(productId);
-          this.trackCarouselInteraction('main_item_click', productId, productIndex);
-        } else {
-          this.goToSlide(productIndex);
-          this.trackCarouselInteraction('side_item_click', productId, productIndex);
+    if (indicators) {
+      indicators.addEventListener('click', (e) => {
+        if (e.target.classList.contains('carousel-indicator')) {
+          this.stopAutoPlay();
+          const slideIndex = parseInt(e.target.getAttribute('data-slide'));
+          this.goToSlide(slideIndex);
         }
       });
     }
 
-    // Event Delegation para los indicadores
-    if (indicatorsContainer) {
-      indicatorsContainer.addEventListener('click', (e) => {
-        const indicator = e.target.closest('.minimal-indicator');
-        if (!indicator) return;
-
-        e.preventDefault();
-        const index = parseInt(indicator.dataset.index, 10);
-        this.goToSlide(index);
-        this.trackCarouselInteraction('indicator_click', this.slides[index]?.id, index);
-      });
+    if (adminBtn) {
+      adminBtn.addEventListener('click', () => this.openAdminModal());
     }
 
-    // Eventos de mouse (sin auto-slide)
-    const carouselContainer = document.querySelector('.minimal-carousel-container');
-    if (carouselContainer) {
-      // Eventos de mouse para efectos visuales si es necesario
+    if (autoPlayBtn) {
+      autoPlayBtn.addEventListener('click', () => this.toggleAutoPlay());
     }
-  }
 
-  setupTouchEvents() {
-    const carouselContainer = document.querySelector('.minimal-carousel-container');
-    if (carouselContainer) {
-      carouselContainer.addEventListener('touchstart', this.handleTouchStart, { passive: false });
-      carouselContainer.addEventListener('touchmove', this.handleTouchMove, { passive: false });
-      carouselContainer.addEventListener('touchend', this.handleTouchEnd, { passive: false });
-    } else {
-      console.warn('Carousel container not found for touch events');
-    }
-  }
-
-  setupGlobalEventListeners() {
-    // Resize handler
-    window.addEventListener('resize', this.handleResize);
-    
-    // Visibility change handler
-    document.addEventListener('visibilitychange', this.handleVisibilityChange);
-    
-    // Keyboard navigation
-    document.addEventListener('keydown', this.handleKeydown);
-  }
-
-  handleResize() {
-    const wasMobile = this.isMobile;
-    const wasTablet = this.isTablet;
-    
-    this.isMobile = window.innerWidth <= 768;
-    this.isTablet = window.innerWidth > 768 && window.innerWidth <= 1024;
-    
-    // Recreate elements if device type changed
-    if (wasMobile !== this.isMobile || wasTablet !== this.isTablet) {
-      const currentItemsToShow = this.getItemsToShow();
-      if (this.itemElements.length !== currentItemsToShow) {
-        this.createCarouselShell();
-      }
-      this.updateCurrentSlide();
-    }
-  }
-
-  handleVisibilityChange() {
-    // Sin funcionalidad automática, no necesita hacer nada
-  }
-
-  handleKeydown(e) {
-    if (!this.isCarouselVisible()) return;
-    
-    switch(e.key) {
-      case 'ArrowLeft':
-        e.preventDefault();
+    // Navegación con teclado
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        this.stopAutoPlay();
         this.prevSlide();
-        this.trackCarouselInteraction('keyboard_arrow_left');
-        break;
-      case 'ArrowRight':
-        e.preventDefault();
+      }
+      if (e.key === 'ArrowRight') {
+        this.stopAutoPlay();
         this.nextSlide();
-        this.trackCarouselInteraction('keyboard_arrow_right');
-        break;
-      case 'Home':
+      }
+      if (e.key === ' ') {
         e.preventDefault();
-        this.goToSlide(0);
-        this.trackCarouselInteraction('keyboard_home');
-        break;
-      case 'End':
-        e.preventDefault();
-        this.goToSlide(this.slides.length - 1);
-        this.trackCarouselInteraction('keyboard_end');
-        break;
-      case 'Enter':
-      case ' ':
-        if (e.target.classList.contains('minimal-carousel-item')) {
-          e.preventDefault();
-          const currentProduct = this.slides[this.currentSlide];
-          if (currentProduct) {
-            this.openProductDetails(currentProduct.id);
-            this.trackCarouselInteraction('keyboard_enter_on_item', currentProduct.id, this.currentSlide);
+        this.toggleAutoPlay();
+      }
+    });
+
+    // Navegación táctil (swipe)
+    if (carousel) {
+      let startX = 0;
+      let startY = 0;
+      let isDragging = false;
+      let isHorizontalSwipe = false;
+
+      carousel.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        isHorizontalSwipe = false;
+      });
+
+      carousel.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const diffX = Math.abs(startX - currentX);
+        const diffY = Math.abs(startY - currentY);
+        
+        // Determinar si es swipe horizontal
+        if (diffX > diffY && diffX > 10) {
+          isHorizontalSwipe = true;
+          e.preventDefault(); // Solo prevenir si es swipe horizontal
+        }
+      });
+
+      carousel.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        if (isHorizontalSwipe) {
+          const endX = e.changedTouches[0].clientX;
+          const diffX = startX - endX;
+          
+          if (Math.abs(diffX) > 50) {
+            this.stopAutoPlay();
+            if (diffX > 0) {
+              this.nextSlide();
+            } else {
+              this.prevSlide();
+            }
           }
         }
-        break;
+      });
     }
   }
 
-  handleTouchStart(e) {
-    if (e.touches.length > 1) return; // Solo un dedo
-    
-    this.touchStartX = e.touches[0].clientX;
-    this.touchStartY = e.touches[0].clientY;
-    this.touchCurrentX = this.touchStartX;
-    this.isDragging = true;
+  nextSlide() {
+    if (this.isAnimating) return;
+    this.currentSlide = (this.currentSlide + 1) % this.slides.length;
+    this.updateCarousel();
   }
 
-  handleTouchMove(e) {
-    if (!this.isDragging || e.touches.length > 1) return;
-    
-    this.touchCurrentX = e.touches[0].clientX;
-    const diffX = Math.abs(this.touchCurrentX - this.touchStartX);
-    const diffY = Math.abs(e.touches[0].clientY - this.touchStartY);
-    
-    // Si es más deslizamiento horizontal que vertical, prevenir scroll
-    if (diffX > diffY && diffX > 10) {
-      e.preventDefault();
-    }
-  }
-
-  handleTouchEnd(e) {
-    if (!this.isDragging) return;
-    
-    const touchEndX = e.changedTouches[0]?.clientX || this.touchCurrentX;
-    const touchEndY = e.changedTouches[0]?.clientY || this.touchStartY;
-    
-    const diffX = this.touchStartX - touchEndX;
-    const diffY = Math.abs(this.touchStartY - touchEndY);
-    
-    // Solo procesar swipe si es más horizontal que vertical y supera el threshold
-    if (Math.abs(diffX) > this.touchThreshold && Math.abs(diffX) > diffY) {
-      if (diffX > 0) {
-        this.nextSlide();
-        this.trackCarouselInteraction('swipe_left');
-      } else {
-        this.prevSlide();
-        this.trackCarouselInteraction('swipe_right');
-      }
-    }
-    
-    this.isDragging = false;
-  }
-
-  isCarouselVisible() {
-    const carouselSection = document.getElementById('carousel-section');
-    const inicioSection = document.getElementById('inicio');
-    return carouselSection && 
-           carouselSection.style.display !== 'none' && 
-           inicioSection && 
-           inicioSection.classList.contains('active');
+  prevSlide() {
+    if (this.isAnimating) return;
+    this.currentSlide = this.currentSlide === 0 ? this.slides.length - 1 : this.currentSlide - 1;
+    this.updateCarousel();
   }
 
   goToSlide(index) {
-    if (index < 0 || index >= this.slides.length || this.isAnimating || this.slides.length === 0) return;
-    
-    this.isAnimating = true;
-    
+    if (this.isAnimating || index === this.currentSlide) return;
     this.currentSlide = index;
-    this.updateCurrentSlide();
-    
-    this.trackCarouselInteraction('go_to_slide', this.slides[index]?.id, index);
+    this.updateCarousel();
+  }
 
-    // Announce the new slide for screen readers
-    const announcer = document.getElementById('carousel-announcer');
-    if (announcer && this.slides[index]) {
-      announcer.textContent = `Mostrando producto ${index + 1} de ${this.slides.length}: ${this.slides[index].nombre}`;
+  updateCarousel() {
+    this.isAnimating = true;
+    const track = document.getElementById('carouselTrack');
+    const indicators = document.querySelectorAll('.carousel-indicator');
+
+    if (track) {
+      const translateX = -this.currentSlide * 100; // 100% por slide
+      track.style.transform = `translateX(${translateX}%)`;
     }
 
-    // Manage focus for accessibility after the view is updated
-    const mainItem = this.itemElements.find(el => el.classList.contains('main'));
-    if (mainItem) {
-      // A small delay can help ensure the browser is ready to move focus
-      setTimeout(() => mainItem.focus(), 50);
-    }
+    indicators.forEach((indicator, index) => {
+      indicator.classList.toggle('active', index === this.currentSlide);
+    });
 
-    // Finalizar animación después de un breve delay
     setTimeout(() => {
       this.isAnimating = false;
     }, 500);
   }
 
-  nextSlide() {
-    if (this.slides.length === 0) return;
-    const nextIndex = (this.currentSlide + 1) % this.slides.length;
-    this.goToSlide(nextIndex);
+  createAdminModal() {
+    if (document.getElementById('carouselAdminModal')) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'carouselAdminModal';
+    modal.className = 'carousel-admin-modal';
+    modal.innerHTML = `
+      <div class="carousel-admin-content">
+        <div class="carousel-admin-header">
+          <h3><i class="fas fa-crown"></i> Panel de Administrador - Carrusel (Máx. 10 productos)</h3>
+          <button class="carousel-admin-close" onclick="fullwidthCarousel.closeAdminModal()">&times;</button>
+        </div>
+        <div class="carousel-admin-actions" id="carouselAdminActions">
+          <div class="carousel-product-counter" id="carouselProductCounter">0/10</div>
+          <div>
+            <button class="carousel-cancel-btn" onclick="fullwidthCarousel.closeAdminModal()">Cancelar</button>
+            <button class="carousel-save-btn" onclick="fullwidthCarousel.saveCarouselProducts()">Guardar</button>
+          </div>
+        </div>
+        <div class="carousel-admin-info">
+          <h4><i class="fas fa-info-circle"></i> Instrucciones:</h4>
+          <p>• Haz clic en los productos para agregarlos al carrusel</p>
+          <p>• Máximo 10 productos permitidos</p>
+          <p>• Los productos se muestran organizados por sección</p>
+          <p>• Solo aparecen productos agregados desde el panel de administración</p>
+          <p><strong>• Los cambios se guardan en la base de datos en la nube</strong></p>
+          <p><strong>• Solo los administradores pueden modificar el carrusel</strong></p>
+        </div>
+        <div class="carousel-counter" id="carouselCounter">Seleccionados: 0/10</div>
+        <div id="carouselProductsContainer"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
   }
 
-  prevSlide() {
-    if (this.slides.length === 0) return;
-    const prevIndex = (this.currentSlide - 1 + this.slides.length) % this.slides.length;
-    this.goToSlide(prevIndex);
+  openAdminModal() {
+    if (!this.checkAdminStatus()) {
+      window.showError('Solo los administradores pueden gestionar el carrusel');
+      return;
+    }
+    
+    // Guardar estado original
+    this.originalProducts = [...this.carouselProducts];
+    this.originalOrder = [...this.selectionOrder];
+    
+    // Deshabilitar scroll del body
+    document.body.style.overflow = 'hidden';
+    
+    const modal = document.getElementById('carouselAdminModal');
+    const container = document.getElementById('carouselProductsContainer');
+    
+    if (container && window.productos) {
+      const sections = {
+        'lazos': 'Lazos',
+        'monos': 'Moños', 
+        'colitas': 'Colitas',
+        'scrunchies': 'Scrunchies',
+        'setmonos': 'Set Moños'
+      };
+      
+      let html = '';
+      
+      Object.keys(sections).forEach(sectionKey => {
+        const sectionProducts = window.productos.filter(p => p.categoria === sectionKey);
+        
+        if (sectionProducts.length > 0) {
+          html += `
+            <div class="carousel-section">
+              <h5>${sections[sectionKey]}</h5>
+              <div class="carousel-products-grid">
+                ${sectionProducts.map(product => {
+                  const isSelected = this.carouselProducts.includes(product.id);
+                  const selectionNumber = isSelected ? this.selectionOrder.indexOf(product.id) + 1 : 0;
+                  return `
+                    <div class="carousel-product-item ${isSelected ? 'selected' : ''}" 
+                         data-id="${product.id}" onclick="fullwidthCarousel.toggleProduct('${product.id}')">
+                      ${isSelected ? `<div class="product-selection-number">${selectionNumber}</div>` : ''}
+                      <img src="${product.imagen}" alt="${product.nombre}">
+                      <h4>${product.nombre}</h4>
+                      <p>$${product.precio?.toLocaleString('es-AR') || '0'}</p>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }
+      });
+      
+      container.innerHTML = html || '<p style="text-align: center; color: #666; padding: 20px;">No hay productos disponibles. Agrega productos desde el panel de administración.</p>';
+    }
+    
+    this.updateCounter();
+    this.checkForChanges();
+    
+    if (modal) {
+      modal.style.display = 'flex';
+    }
   }
 
-  updateCurrentSlide() {
-    this.updateView();
-    this.updateIndicators();
+  closeAdminModal() {
+    const modal = document.getElementById('carouselAdminModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+    // Rehabilitar scroll del body
+    document.body.style.overflow = '';
   }
 
-
-
-  updateIndicators() {
-    const indicators = document.querySelectorAll('.minimal-indicator');
-    indicators.forEach((indicator, index) => {
-      indicator.classList.toggle('active', index === this.currentSlide);
-      indicator.setAttribute('aria-selected', index === this.currentSlide);
-    });
+  toggleProduct(productId) {
+    const index = this.carouselProducts.indexOf(productId);
+    
+    if (index > -1) {
+      // Remover producto
+      this.carouselProducts.splice(index, 1);
+      const orderIndex = this.selectionOrder.indexOf(productId);
+      if (orderIndex > -1) {
+        this.selectionOrder.splice(orderIndex, 1);
+      }
+    } else if (this.carouselProducts.length < 10) {
+      // Agregar producto
+      this.carouselProducts.push(productId);
+      this.selectionOrder.push(productId);
+    } else {
+      window.showWarning('Máximo 10 productos permitidos');
+      return;
+    }
+    
+    // Actualizar vista completa
+    this.refreshProductsView();
+    this.updateCounter();
+    this.checkForChanges();
+    this.checkForChanges();
+  }
+  
+  updateCounter() {
+    const counter = document.getElementById('carouselCounter');
+    const productCounter = document.getElementById('carouselProductCounter');
+    
+    if (counter) {
+      counter.textContent = `Seleccionados: ${this.carouselProducts.length}/10`;
+    }
+    
+    if (productCounter) {
+      productCounter.textContent = `${this.carouselProducts.length}/10`;
+    }
   }
 
-  openProductDetails(productId) {
-    if (!productId) return;
-    window.location.href = `details/details.html?id=${productId}`;
-  }
-
-
-
-  handleSectionChange(newSection) {
-    const carouselSection = document.getElementById('carousel-section');
-    if (carouselSection) {
-      if (newSection === 'inicio') {
-        carouselSection.style.display = 'block';
-        this.handleResize();
+  checkForChanges() {
+    const hasChanges = JSON.stringify(this.carouselProducts.sort()) !== JSON.stringify(this.originalProducts.sort()) ||
+                      JSON.stringify(this.selectionOrder) !== JSON.stringify(this.originalOrder);
+    
+    const actionsDiv = document.getElementById('carouselAdminActions');
+    if (actionsDiv) {
+      if (hasChanges) {
+        actionsDiv.classList.add('show');
       } else {
-        carouselSection.style.display = 'none';
+        actionsDiv.classList.remove('show');
       }
     }
   }
 
-  trackCarouselInteraction(action, productId = null, slideIndex = null) {
-    console.log('Carousel interaction:', {
-      action,
-      productId,
-      slideIndex,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Aquí puedes agregar código para Google Analytics, Facebook Pixel, etc.
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'carousel_interaction', {
-        action: action,
-        product_id: productId,
-        slide_index: slideIndex
-      });
-    }
-  }
-
-  destroy() {
-    // Remover event listeners globales
-    window.removeEventListener('resize', this.handleResize);
-    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
-    document.removeEventListener('keydown', this.handleKeydown);
-    
-    // Remover eventos touch
-    const carouselContainer = document.querySelector('.minimal-carousel-container');
-    if (carouselContainer) {
-      carouselContainer.removeEventListener('touchstart', this.handleTouchStart);
-      carouselContainer.removeEventListener('touchmove', this.handleTouchMove);
-      carouselContainer.removeEventListener('touchend', this.handleTouchEnd);
+  async saveCarouselProducts() {
+    if (!this.checkAdminStatus()) {
+      window.showError('Solo los administradores pueden modificar el carrusel');
+      return;
     }
     
-    this.isInitialized = false;
-    console.log('Carrusel minimalista destruido');
+    try {
+      // Solo guardar en Firestore (base de datos en la nube)
+      if (window.firestoreManager && window.firestoreManager.setDocument) {
+        const carouselData = {
+          products: this.carouselProducts,
+          selectionOrder: this.selectionOrder,
+          updatedAt: new Date().toISOString(),
+          updatedBy: window.authFunctions?.getCurrentUser()?.uid
+        };
+        
+        await window.firestoreManager.setDocument('settings', 'carousel', carouselData);
+        console.log('Carrusel guardado en Firestore');
+        
+        // Recargar y actualizar carrusel
+        await this.loadCarouselProducts();
+        this.createCarousel();
+        this.bindEvents();
+        
+        // Cerrar modal
+        this.closeAdminModal();
+        
+        window.showSuccess('Carrusel guardado exitosamente en la base de datos');
+      } else {
+        throw new Error('No se pudo conectar con la base de datos');
+      }
+      
+    } catch (error) {
+      console.error('Error guardando carrusel:', error);
+      window.showError('Error: No se pudo guardar en la base de datos. Verifica tu conexión.');
+    }
   }
+  
 
-  // Métodos públicos
-  getCurrentSlideInfo() {
-    const currentProduct = this.slides[this.currentSlide];
-    return {
-      index: this.currentSlide,
-      total: this.slides.length,
-      product: currentProduct,
-      isPlaying: false // Siempre false ya que no hay auto-slide
-    };
-  }
-
+  
   toggleAutoPlay() {
-    // Sin funcionalidad automática, siempre retorna false
-    return false;
-  }
-
-  goToProductById(productId) {
-    const index = this.slides.findIndex(product => product.id === productId);
-    if (index !== -1) {
-      this.goToSlide(index);
-      return true;
+    const btn = document.getElementById('autoPlayBtn');
+    if (this.autoPlay) {
+      this.stopAutoPlay();
+      btn.innerHTML = '<i class="fas fa-play"></i>';
+      btn.title = 'Reproducción automática';
+    } else {
+      this.startAutoPlay();
+      btn.innerHTML = '<i class="fas fa-pause"></i>';
+      btn.title = 'Pausar reproducción';
     }
-    return false;
   }
-
-  renderProductCard(product) {
-    return `
-      <div class="product-card">
-        <img src="${product.imagen}" alt="${product.nombre}" class="product-image">
-        <div class="product-info">
-          <h4>${product.nombre}</h4>
-          <p>$${product.precio?.toLocaleString('es-AR') || '0'}</p>
-          <div class="product-actions">
-            <button class="like-btn" data-id="${product.id}">
-              <img src="/img-galery/heartproduct.svg" alt="Like" class="heart-icon">
-            </button>
-            <button class="add-to-cart-btn" data-id="${product.id}">
-              <img src="/img-galery/cart-icon.svg" alt="Añadir al carrito" class="cart-btn-icon">
-            </button>
+  
+  startAutoPlay() {
+    this.autoPlay = true;
+    this.autoPlayInterval = setInterval(() => {
+      this.nextSlide();
+    }, 4000);
+  }
+  
+  stopAutoPlay() {
+    this.autoPlay = false;
+    if (this.autoPlayInterval) {
+      clearInterval(this.autoPlayInterval);
+      this.autoPlayInterval = null;
+    }
+  }
+  
+  refreshProductsView() {
+    const container = document.getElementById('carouselProductsContainer');
+    if (!container || !window.productos) return;
+    
+    const sections = {
+      'lazos': 'Lazos',
+      'monos': 'Moños', 
+      'colitas': 'Colitas',
+      'scrunchies': 'Scrunchies',
+      'setmonos': 'Set Moños'
+    };
+    
+    let html = '';
+    
+    Object.keys(sections).forEach(sectionKey => {
+      const sectionProducts = window.productos.filter(p => p.categoria === sectionKey);
+      
+      if (sectionProducts.length > 0) {
+        html += `
+          <div class="carousel-section">
+            <h5>${sections[sectionKey]}</h5>
+            <div class="carousel-products-grid">
+              ${sectionProducts.map(product => {
+                const isSelected = this.carouselProducts.includes(product.id);
+                const selectionNumber = isSelected ? this.selectionOrder.indexOf(product.id) + 1 : 0;
+                return `
+                  <div class="carousel-product-item ${isSelected ? 'selected' : ''}" 
+                       data-id="${product.id}" onclick="fullwidthCarousel.toggleProduct('${product.id}')">
+                    ${isSelected ? `<div class="product-selection-number">${selectionNumber}</div>` : ''}
+                    <img src="${product.imagen}" alt="${product.nombre}">
+                    <h4>${product.nombre}</h4>
+                    <p>$${product.precio?.toLocaleString('es-AR') || '0'}</p>
+                  </div>
+                `;
+              }).join('')}
+            </div>
           </div>
-        </div>
-      </div>
-    `;
-  }
-}
-
-// Instancia global del carrusel minimalista
-let minimalCarousel = null;
-
-// Función para inicializar el carrusel minimalista
-function initializeMinimalCarousel() {
-  if (!minimalCarousel) {
-    minimalCarousel = new MinimalProductCarousel();
-  }
-}
-
-// Función para manejar cambios de sección (llamada desde script.js)
-function handleMinimalCarouselSectionChange(section) {
-  if (minimalCarousel) {
-    minimalCarousel.handleSectionChange(section);
-  }
-}
-
-// Inicialización cuando el DOM está listo
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM loaded, preparing minimal carousel...');
-  
-  setTimeout(() => {
-    initializeMinimalCarousel();
-  }, 300);
-});
-
-// Inicialización de respaldo
-window.addEventListener('load', () => {
-  if (!minimalCarousel) {
-    console.log('Window loaded, initializing minimal carousel as fallback...');
-    setTimeout(initializeMinimalCarousel, 200);
-  }
-});
-
-// Limpieza antes de descargar la página
-window.addEventListener('beforeunload', () => {
-  if (minimalCarousel) {
-    minimalCarousel.destroy();
-  }
-});
-
-// Exportar funciones para acceso global
-window.handleMinimalCarouselSectionChange = handleMinimalCarouselSectionChange;
-
-/* --- FUNCIONALIDAD HEREDADA PARA COMPATIBILIDAD --- */
-
-// Mapa de colores - ACTUALIZADO con todos los colores del filtro
-const colorMap = {
-  "Rosa": "#ffc0cb",
-  "Azul": "#0066cc", 
-  "Rojo": "#ff0000",
-  "Amarillo": "#ffff00",
-  "Blanco": "#ffffff",
-  "Gris": "#808080",
-  "Negro": "#000000",
-  "Verde": "#008000",
-  "Dorado": "#ffd700",
-  "Plateado": "#c0c0c0",
-  "Multicolor": "linear-gradient(45deg, #ff69b4, #00bfff, #ffa500, #32cd32)",
-  "Naranja": "#ffa500",
-  "Púrpura": "#800080"
-};
-
-/**
- * Convierte color de texto a código hexadecimal o gradiente
- * @param {string} colorName - Nombre del color en texto
- * @returns {string} - Código CSS del color
- */
-function getColorCode(colorName) {
-  return colorMap[colorName] || "#cccccc"; // Gris por defecto si no se encuentra
-}
-
-/**
- * Crea HTML para la etiqueta de color y tela
- * @param {Object} productData - Datos del producto
- * @returns {string} - HTML completo de la etiqueta
- */
-function createColorFabricTag(productData) {
-  const colorCode = getColorCode(productData.color);
-  const borderStyle = productData.color === 'Blanco' ? 'border: 2px solid #ccc;' : '';
-  
-  return `
-    <div class="color-fabric-tag">
-      <div class="color-circle" style="background: ${colorCode}; ${borderStyle}"></div>
-      <span class="fabric-text">${productData.tela}</span>
-    </div>
-  `;
-}
-
-/**
- * Función actualizada para crear tarjetas de producto (compatibilidad)
- */
-window.createProductCard = function (productData) {
-  const productCard = document.createElement("div");
-  productCard.className = "product";
-  productCard.style.cursor = 'pointer';
-  
-  // Crear el HTML completo del producto
-  productCard.innerHTML = `
-    <div class="gray-square image-container">
-      <img src="${productData.imagen}" alt="${productData.nombre}" onerror="handleImageError(this)"/>
-      ${createColorFabricTag(productData)}
-      <button class="add-to-cart-btn" data-id="${productData.id}">
-        <img src="/img-galery/icon-carrito.svg" alt="Agregar al carrito" class="cart-btn-icon" />
-      </button>
-      <span class="added-text" style="display: none;">Agregado</span>
-    </div>
-    <div class="product-info">
-      <h3>${productData.nombre}</h3>
-      <p class="product-price">$${productData.precio.toLocaleString('es-AR')}</p>
-    </div>
-  `;
-
-  // Event listener para navegar a detalles
-  productCard.addEventListener('click', (e) => {
-    if (!e.target.closest('.add-to-cart-btn')) {
-      window.location.href = `details/details.html?id=${productData.id}`;
-    }
-  });
-
-  return productCard;
-};
-
-// Función para manejar flash de botón (compatibilidad)
-function flashButton(button) {
-  if (!button) return;
-  
-  button.classList.add('flash');
-  setTimeout(() => {
-    button.classList.remove('flash');
-  }, 300);
-}
-
-// Utilidades adicionales para el carrusel
-
-/**
- * Función para precargar imágenes del carrusel
- */
-function preloadCarouselImages() {
-  if (!minimalCarousel || !minimalCarousel.slides) return;
-  
-  minimalCarousel.slides.forEach(product => {
-    const img = new Image();
-    img.src = product.imagen;
-  });
-}
-
-/**
- * Función para obtener el producto actual del carrusel
- */
-function getCurrentCarouselProduct() {
-  if (!minimalCarousel) return null;
-  return minimalCarousel.getCurrentSlideInfo();
-}
-
-/**
- * Controlador del carrusel para scripts externos
- */
-window.carouselController = {
-  next: () => minimalCarousel?.nextSlide(),
-  prev: () => minimalCarousel?.prevSlide(),
-  goTo: (index) => minimalCarousel?.goToSlide(index),
-  getCurrentInfo: () => minimalCarousel?.getCurrentSlideInfo(),
-  goToProduct: (productId) => minimalCarousel?.goToProductById(productId)
-};
-
-// Función para debug en desarrollo
-function debugMinimalCarousel() {
-  if (minimalCarousel) {
-    const info = minimalCarousel.getCurrentSlideInfo();
-    console.log('Minimal carousel state:', {
-      currentSlide: info.index,
-      totalSlides: info.total,
-      currentProduct: info.product?.nombre,
-      isPlaying: info.isPlaying,
-
-      isVisible: minimalCarousel.isCarouselVisible(),
-      isMobile: minimalCarousel.isMobile,
-      isTablet: minimalCarousel.isTablet,
-      isAnimating: minimalCarousel.isAnimating
+        `;
+      }
     });
-  } else {
-    console.log('Minimal carousel not initialized');
+    
+    container.innerHTML = html || '<p style="text-align: center; color: #666; padding: 20px;">No hay productos disponibles.</p>';
   }
-}
 
-// Función para reiniciar el carrusel (útil para debugging)
-function restartMinimalCarousel() {
-  if (minimalCarousel) {
-    minimalCarousel.destroy();
-    minimalCarousel = null;
-  }
-  setTimeout(initializeMinimalCarousel, 500);
-}
-
-// Función para reinicializar cuando se cargan productos
-function reinitializeCarouselWithProducts() {
-  if (minimalCarousel && minimalCarousel.isInitialized) {
-    minimalCarousel.selectFeaturedProducts();
-    if (minimalCarousel.slides.length > 0) {
-      minimalCarousel.createCarouselElements();
+  async removeSlide(index) {
+    if (!this.checkAdminStatus()) {
+      window.showError('Solo los administradores pueden modificar el carrusel');
+      return;
     }
-  } else {
-    initializeMinimalCarousel();
+    
+    if (await window.confirm('¿Eliminar este producto del carrusel?')) {
+      const productId = this.slides[index].id;
+      this.carouselProducts = this.carouselProducts.filter(id => id !== productId);
+      const orderIndex = this.selectionOrder.indexOf(productId);
+      if (orderIndex > -1) {
+        this.selectionOrder.splice(orderIndex, 1);
+      }
+      
+      // Solo guardar en Firestore
+      try {
+        if (window.firestoreManager && window.firestoreManager.setDocument) {
+          const carouselData = {
+            products: this.carouselProducts,
+            selectionOrder: this.selectionOrder,
+            updatedAt: new Date().toISOString(),
+            updatedBy: window.authFunctions?.getCurrentUser()?.uid
+          };
+          
+          await window.firestoreManager.setDocument('settings', 'carousel', carouselData);
+          console.log('Carrusel actualizado en Firestore');
+          
+          // Recargar productos del carrusel
+          await this.loadCarouselProducts();
+          
+          // Ajustar slide actual si es necesario
+          if (this.currentSlide >= this.slides.length && this.slides.length > 0) {
+            this.currentSlide = this.slides.length - 1;
+          } else if (this.slides.length === 0) {
+            this.currentSlide = 0;
+          }
+          
+          // Recrear carrusel
+          this.createCarousel();
+          this.bindEvents();
+        } else {
+          throw new Error('No se pudo conectar con la base de datos');
+        }
+      } catch (error) {
+        console.error('Error actualizando carrusel:', error);
+        window.showError('Error: No se pudo actualizar la base de datos');
+      }
+    }
+  }
+
+  handleSectionChange(section) {
+    const carouselSection = document.getElementById('carousel-section');
+    if (carouselSection) {
+      carouselSection.style.display = section === 'inicio' ? 'block' : 'none';
+    }
   }
 }
 
-// Exportar funciones de debug para consola
-window.debugMinimalCarousel = debugMinimalCarousel;
-window.restartMinimalCarousel = restartMinimalCarousel;
-window.preloadCarouselImages = preloadCarouselImages;
-window.reinitializeCarouselWithProducts = reinitializeCarouselWithProducts;
+// Instancia global del carrusel
+let fullwidthCarousel = null;
 
-// Auto-precargar imágenes cuando el carrusel esté listo
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    if (typeof productos !== 'undefined') {
-      preloadCarouselImages();
-    }
-  }, 1000);
+// Inicializar carrusel
+function initializeFullwidthCarousel() {
+  if (!fullwidthCarousel && window.productos && window.productos.length > 0) {
+    fullwidthCarousel = new FullwidthCarousel();
+  }
+}
+
+// Manejar cambios de sección
+function handleMinimalCarouselSectionChange(section) {
+  if (fullwidthCarousel) {
+    fullwidthCarousel.handleSectionChange(section);
+  }
+}
+
+// Inicializar cuando se cargan los productos
+window.addEventListener('productsLoaded', () => {
+  console.log('Productos cargados, inicializando carrusel fullwidth...');
+  setTimeout(initializeFullwidthCarousel, 100);
 });
 
 
 
-// Función para manejar errores de carga de imagen
-function handleImageError(img, fallbackSrc = '/img-galery/placeholder.jpg') {
-  if (img.src !== fallbackSrc) { // Evitar bucle infinito
-    img.onerror = null;
-    img.src = fallbackSrc;
-    img.classList.add('image-error');
-  }
-}
+// Exportar funciones
+window.handleMinimalCarouselSectionChange = handleMinimalCarouselSectionChange;
+window.initializeMinimalCarousel = initializeFullwidthCarousel;
 
-// Aplicar manejo de errores a imágenes del carrusel
-document.addEventListener('DOMContentLoaded', () => {
-  // Usar delegación de eventos para imágenes cargadas dinámicamente
-  document.addEventListener('error', (e) => {
-    if (e.target.tagName === 'IMG' && e.target.closest('.minimal-carousel-item')) {
-      handleImageError(e.target);
-    }
-  }, true);
-});
-
-// Función para analytics/tracking (opcional)
-function trackCarouselInteraction(action, productId = null, slideIndex = null) {
-  // Aquí puedes agregar código para Google Analytics, Facebook Pixel, etc.
-  console.log('Carousel interaction:', {
-    action,
-    productId,
-    slideIndex,
-    timestamp: new Date().toISOString()
-  });
-  
-  // Ejemplo para Google Analytics (descomentar si usas GA)
-  // if (typeof gtag !== 'undefined') {
-  //   gtag('event', 'carousel_interaction', {
-  //     action: action,
-  //     product_id: productId,
-  //     slide_index: slideIndex
-  //   });
-  // }
-}
-
-// Exportar función de tracking
-window.trackCarouselInteraction = trackCarouselInteraction;
+// Controlador del carrusel
+window.carouselController = {
+  next: () => fullwidthCarousel?.nextSlide(),
+  prev: () => fullwidthCarousel?.prevSlide(),
+  goTo: (index) => fullwidthCarousel?.goToSlide(index),
+  getCurrentInfo: () => ({
+    index: fullwidthCarousel?.currentSlide || 0,
+    total: fullwidthCarousel?.slides.length || 0
+  })
+};

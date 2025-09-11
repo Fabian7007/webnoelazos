@@ -1,4 +1,4 @@
-// script.js - Versión corregida y optimizada
+// Main Script - Simplified and Ordered
 let currentSearch = '';
 let currentColorFilter = '';
 let currentTelaFilter = '';
@@ -6,16 +6,23 @@ let currentStatusFilter = '';
 let currentSection = 'inicio';
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let currentPage = 1;
-let isInitialized = false; // Flag para evitar inicialización múltiple
+let isInitialized = false;
+let currentHighlightIndex = -1;
+let autocompleteResults = [];
 
-// CONFIGURACIÓN DE PRODUCTOS POR PÁGINA
+// Initialize empty productos array
+let productos = [];
+if (typeof window.productos === 'undefined') {
+  window.productos = productos;
+}
+
+// Items per page configuration
 const ITEMS_PER_PAGE = {
-  mobile: 6,    // ≤ 768px
-  tablet: 9,    // 769px - 1024px
-  desktop: 18   // ≥ 1025px
+  mobile: 6,
+  tablet: 9,
+  desktop: 18
 };
 
-// Función para obtener items por página según el tamaño de pantalla
 function getItemsPerPage() {
   const width = window.innerWidth;
   if (width <= 768) return ITEMS_PER_PAGE.mobile;
@@ -23,198 +30,57 @@ function getItemsPerPage() {
   return ITEMS_PER_PAGE.desktop;
 }
 
-/**
- * Elimina los acentos de una cadena de texto para búsquedas flexibles.
- * @param {string} str La cadena de entrada.
- * @returns {string} La cadena sin acentos.
- */
 function removeAccents(str) {
   if (!str) return '';
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
-// Función para cerrar todos los overlays/dropdowns
+
+// Close all dropdowns
 function closeAllDropdowns() {
   const elements = {
     mobileMenu: document.getElementById('mobileMenu'),
     searchDropdown: document.getElementById('searchDropdown'),
     cartDropdown: document.getElementById('cartDropdown'),
     menuOverlay: document.getElementById('menuOverlay'),
-    menuToggle: document.getElementById('menuToggle')
+    menuToggle: document.getElementById('menuToggle'),
+    userDropdown: document.getElementById('userDropdown')
   };
 
-  // Cerrar menú móvil
   if (elements.mobileMenu?.classList.contains('active')) {
     elements.mobileMenu.classList.remove('active');
   }
-
-  // Cerrar búsqueda
   if (elements.searchDropdown?.classList.contains('active')) {
     elements.searchDropdown.classList.remove('active');
   }
-
-  // Cerrar carrito
   if (elements.cartDropdown?.classList.contains('active')) {
     elements.cartDropdown.classList.remove('active');
   }
-
-  // Cerrar overlay
   if (elements.menuOverlay?.classList.contains('active')) {
     elements.menuOverlay.classList.remove('active');
   }
-
-  // Reset menu toggle
   if (elements.menuToggle?.classList.contains('active')) {
     elements.menuToggle.classList.remove('active');
   }
-
-  // Remover clases de scroll bloqueado
-  document.body.classList.remove('menu-open', 'cart-open');
-}
-
-// Función para mostrar/ocultar botón de volver
-function updateBackButton() {
-  let backButton = document.getElementById('backButton');
-
-  if (currentSearch.trim() !== '') {
-    if (!backButton) {
-      backButton = document.createElement('button');
-      backButton.id = 'backButton';
-      backButton.className = 'back-button';
-      backButton.innerHTML = '<i class="fas fa-arrow-left"></i> Volver';
-      backButton.onclick = clearSearch;
-
-      const sectionTitle = document.getElementById('sectionTitle');
-      if (sectionTitle) {
-        sectionTitle.parentNode.insertBefore(backButton, sectionTitle);
-      }
-    }
-    backButton.style.display = 'block';
-  } else {
-    if (backButton) {
-      backButton.style.display = 'none';
-    }
-  }
-}
-
-// Función para limpiar solo la búsqueda
-function clearSearch() {
-  currentSearch = '';
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    searchInput.value = '';
-  }
-  currentPage = 1;
-
-  // Limpiar parámetro de búsqueda de la URL
-  const url = new URL(window.location);
-  url.searchParams.delete('search');
-  url.searchParams.delete('pag');
-  window.history.replaceState({}, '', url);
-
-  clearFilters();
-}
-
-// Función helper para obtener el nombre de display de las secciones
-function getSectionDisplayName(section) {
-  const sectionNames = {
-    'inicio': 'Productos Destacados',
-    'lazos': 'Lazos',
-    'monos': 'Moños',
-    'colitas': 'Colitas',
-    'scrunchies': 'Scrunchies',
-    'setmonos': 'Set Moños'
-  };
-  return sectionNames[section] || section.charAt(0).toUpperCase() + section.slice(1);
-}
-
-// Función para mostrar secciones
-function showSection(seccion) {
-  // Limpiar todos los filtros y la búsqueda al cambiar de sección
-  currentSearch = '';
-  currentColorFilter = '';
-  currentTelaFilter = '';
-  currentStatusFilter = '';
-
-  // Limpiar los campos de la interfaz de usuario
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) searchInput.value = '';
-  
-  const colorFilter = document.getElementById('colorFilter');
-  if (colorFilter) colorFilter.value = '';
-  
-  const telaFilter = document.getElementById('telaFilter');
-  if (telaFilter) telaFilter.value = '';
-
-  const statusFilter = document.getElementById('statusFilter');
-  if (statusFilter) statusFilter.value = '';
-
-  // Actualizar la URL con el hash de la sección y limpiar otros parámetros
-  const url = new URL(window.location);
-  url.searchParams.delete('search');
-  url.searchParams.delete('pag');
-  url.hash = seccion;
-  // Usamos replaceState para actualizar la URL sin recargar la página.
-  window.history.replaceState({ section: seccion }, ``, url);
-  updateBackButton();
-
-  currentSection = seccion;
-  currentPage = 1;
-  
-  const sections = document.querySelectorAll('.section');
-  sections.forEach(sec => sec.classList.remove('active'));
-
-  const targetSection = document.getElementById(seccion);
-  if (targetSection) {
-    targetSection.classList.add('active');
+  if (elements.userDropdown) {
+    elements.userDropdown.style.display = 'none';
+    elements.userDropdown.classList.remove('show');
   }
 
-  // Actualizar título de sección solo si no hay búsqueda activa
-  const sectionTitle = document.getElementById('sectionTitle');
-  if (currentSearch.trim() === '' && sectionTitle) {
-    // 1. Aplicar clase para que el título se desvanezca
-    sectionTitle.classList.add('fade-out');
-
-    // 2. Esperar a que la animación de salida termine
-    setTimeout(() => {
-      // 3. Cambiar el texto
-      sectionTitle.textContent = getSectionDisplayName(seccion);
-      // 4. Quitar la clase para que el título aparezca de nuevo
-      sectionTitle.classList.remove('fade-out');
-    }, 300); // NOTA: Este tiempo debe coincidir con la duración de la transición en CSS
-  }
-
-  // Actualizar clase activa para elementos del menú
-  const menuItems = document.querySelectorAll('.menu-list li');
-  menuItems.forEach(item => {
-    const link = item.querySelector('a');
-    if (link && link.getAttribute('onclick')?.includes(`showSection('${seccion}')`)) {
-      item.classList.add('active-section');
-    } else {
-      item.classList.remove('active-section');
-    }
-  });
-
-  applyFilters();
-  closeAllDropdowns();
-
-  // Scroll to the title after changing section
-  const sectionTitleElement = document.getElementById('sectionTitle');
-  if (sectionTitleElement) {
-    setTimeout(() => {
-      sectionTitleElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 150); // Small delay to ensure DOM is updated
-  }
+  // Remove all body classes that prevent scrolling
+  document.body.classList.remove('menu-open', 'cart-open', 'modal-open', 'no-scroll');
 }
 
-// Funciones de toggle para menús
-function toggleMenu() {
+// Toggle functions
+function toggleMenu(event) {
+  event.preventDefault();
+  event.stopPropagation();
   const mobileMenu = document.getElementById('mobileMenu');
   const menuToggle = document.getElementById('menuToggle');
   const menuOverlay = document.getElementById('menuOverlay');
+
+  // Close other dropdowns
   const searchDropdown = document.getElementById('searchDropdown');
   const cartDropdown = document.getElementById('cartDropdown');
-
-  // Cerrar otros dropdowns
   if (searchDropdown?.classList.contains('active')) {
     searchDropdown.classList.remove('active');
   }
@@ -223,9 +89,8 @@ function toggleMenu() {
     document.body.classList.remove('cart-open');
   }
 
-  // Toggle menú
   const isMenuActive = mobileMenu?.classList.contains('active');
-
+  
   if (isMenuActive) {
     mobileMenu?.classList.remove('active');
     menuToggle?.classList.remove('active');
@@ -239,15 +104,18 @@ function toggleMenu() {
   }
 }
 
-function toggleSearch() {
+function toggleSearch(event) {
+  event.preventDefault();
+  event.stopPropagation();
   const searchDropdown = document.getElementById('searchDropdown');
   const searchInput = document.getElementById('searchInput');
   const menuOverlay = document.getElementById('menuOverlay');
+
+  // Close other dropdowns
   const mobileMenu = document.getElementById('mobileMenu');
   const cartDropdown = document.getElementById('cartDropdown');
   const menuToggle = document.getElementById('menuToggle');
-
-  // Cerrar otros dropdowns
+  
   if (mobileMenu?.classList.contains('active')) {
     mobileMenu.classList.remove('active');
     menuToggle?.classList.remove('active');
@@ -258,9 +126,8 @@ function toggleSearch() {
     document.body.classList.remove('cart-open');
   }
 
-  // Toggle búsqueda
   const isSearchActive = searchDropdown?.classList.contains('active');
-
+  
   if (isSearchActive) {
     searchDropdown?.classList.remove('active');
     menuOverlay?.classList.remove('active');
@@ -273,14 +140,20 @@ function toggleSearch() {
   }
 }
 
-function toggleCart() {
+function toggleCart(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  
   const cartDropdown = document.getElementById('cartDropdown');
   const menuOverlay = document.getElementById('menuOverlay');
+
+  // Close other dropdowns
   const mobileMenu = document.getElementById('mobileMenu');
   const searchDropdown = document.getElementById('searchDropdown');
   const menuToggle = document.getElementById('menuToggle');
-
-  // Cerrar otros dropdowns
+  
   if (mobileMenu?.classList.contains('active')) {
     mobileMenu.classList.remove('active');
     menuToggle?.classList.remove('active');
@@ -290,9 +163,8 @@ function toggleCart() {
     searchDropdown.classList.remove('active');
   }
 
-  // Toggle carrito
   const isCartActive = cartDropdown?.classList.contains('active');
-
+  
   if (isCartActive) {
     cartDropdown?.classList.remove('active');
     menuOverlay?.classList.remove('active');
@@ -301,27 +173,134 @@ function toggleCart() {
     cartDropdown?.classList.add('active');
     menuOverlay?.classList.add('active');
     document.body.classList.add('cart-open');
-    // Solo renderizar cuando se abre el carrito
     renderCart();
   }
 }
 
-// Enhanced product creation function integration
+// Function specifically for closing cart
+function closeCart() {
+  const cartDropdown = document.getElementById('cartDropdown');
+  const menuOverlay = document.getElementById('menuOverlay');
+  
+  if (cartDropdown?.classList.contains('active')) {
+    cartDropdown.classList.remove('active');
+    menuOverlay?.classList.remove('active');
+    document.body.classList.remove('cart-open');
+  }
+}
+
+// Section management
+function getSectionDisplayName(section) {
+  const sectionNames = {
+    'inicio': 'Productos Destacados',
+    'lazos': 'Lazos',
+    'monos': 'Moños',
+    'colitas': 'Colitas',
+    'scrunchies': 'Scrunchies',
+    'setmonos': 'Set Moños'
+  };
+  return sectionNames[section] || section.charAt(0).toUpperCase() + section.slice(1);
+}
+
+function showSection(seccion) {
+  // Clear filters when changing sections
+  currentSearch = '';
+  currentColorFilter = '';
+  currentTelaFilter = '';
+  currentStatusFilter = '';
+
+  // Clear UI fields
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.value = '';
+  
+  // Hide autocomplete suggestions
+  hideAutocompleteSuggestions();
+  
+  const colorFilter = document.getElementById('colorFilter');
+  if (colorFilter) colorFilter.value = '';
+  
+  const telaFilter = document.getElementById('telaFilter');
+  if (telaFilter) telaFilter.value = '';
+
+  const statusFilter = document.getElementById('statusFilter');
+  if (statusFilter) statusFilter.value = '';
+
+  // Hide back button and reset search display
+  const backButton = document.getElementById('backButton');
+  if (backButton) {
+    backButton.style.display = 'none';
+  }
+  
+  const searchTermDisplay = document.getElementById('searchTermDisplay');
+  if (searchTermDisplay) {
+    searchTermDisplay.style.display = 'none';
+  }
+
+  // Update URL without hash to prevent scroll
+  const url = new URL(window.location);
+  url.searchParams.delete('search');
+  url.searchParams.delete('pag');
+  url.hash = '';
+  window.history.replaceState({ section: seccion }, '', url);
+
+  currentSection = seccion;
+  currentPage = 1;
+  
+  // Update active section
+  const sections = document.querySelectorAll('.section');
+  sections.forEach(sec => sec.classList.remove('active'));
+
+  const targetSection = document.getElementById(seccion);
+  if (targetSection) {
+    targetSection.classList.add('active');
+  }
+
+  // Update section title
+  const sectionTitle = document.getElementById('sectionTitle');
+  if (sectionTitle) {
+    sectionTitle.textContent = getSectionDisplayName(seccion);
+  }
+
+  // Update menu active state
+  const menuItems = document.querySelectorAll('.menu-list li');
+  menuItems.forEach(item => {
+    const link = item.querySelector('a[data-section]');
+    if (link && link.dataset.section === seccion) {
+      item.classList.add('active-section');
+    } else {
+      item.classList.remove('active-section');
+    }
+  });
+
+  // Handle carousel visibility
+  if (window.handleMinimalCarouselSectionChange) {
+    window.handleMinimalCarouselSectionChange(seccion);
+  }
+
+  // Update admin controls
+  updateAdminControlsVisibility();
+
+  applyFilters();
+  closeAllDropdowns();
+}
+
+// Product creation
 function createProductElement(prod) {
-  // Always use this function, ignore enhanced version for now
   const div = document.createElement('div');
   div.className = 'product';
   if (prod.status) {
     div.classList.add(`product-status-${prod.status}`);
   }
   div.style.cursor = 'pointer';
-  // Check if user is admin
+
+  // Check if user is admin (will be updated asynchronously)
   const currentUserData = window.authFunctions?.getCurrentUserData?.();
   const isAdmin = currentUserData && currentUserData.role === 'administrador';
 
   div.innerHTML = `
     <div class="gray-square">
       <img src="${prod.imagen}" alt="${prod.nombre}" />
+
       <div class="product-overlay-actions">
         <button class="add-to-cart-btn" data-id="${prod.id}">
           <img src="/img-galery/icon-carrito.svg" alt="Agregar al carrito" class="cart-btn-icon" />
@@ -331,14 +310,8 @@ function createProductElement(prod) {
     </div>
     <div class="product-info">
       <h3>${prod.nombre}</h3>
-      <p class="product-price">$${prod.precio.toLocaleString('es-AR')}</p>
-      <div class="like-container">
-        <button class="like-btn" data-product-id="${prod.id}" title="Me gusta">
-          <img src="/img-galery/heart-icon.svg" alt="Like" class="heart-icon" />
-        </button>
-        <span class="like-count" data-product-id="${prod.id}">${prod.likesCount || 0}</span>
-      </div>
-      <div class="product-actions">
+      <div class="product-price-row">
+        <p class="product-price">$${prod.precio.toLocaleString('es-AR')}</p>
         ${isAdmin ? `
           <div class="admin-actions">
             <button class="edit-product-btn" data-product-id="${prod.id}" title="Editar producto">
@@ -363,11 +336,11 @@ function createProductElement(prod) {
     graySquare.appendChild(badge);
   }
 
+  // Add color/fabric tag
   if (prod.color && prod.tela) {
     const tag = document.createElement('div');
     tag.className = 'color-fabric-tag';
     
-    // Mapa de colores
     const colorMap = {
       'Rosa': '#FFC0CB',
       'Azul': '#0000FF',
@@ -401,14 +374,15 @@ function createProductElement(prod) {
     }
     div.style.cursor = 'default';
   }
+
   return div;
 }
 
-// FUNCIÓN PRINCIPAL PARA APLICAR FILTROS Y PAGINACIÓN - CORREGIDA
+// Apply filters and pagination
 function applyFilters(page = 1) {
   currentPage = page;
 
-  // Actualizar URL con paginación
+  // Update URL with pagination
   const url = new URL(window.location);
   if (page > 1) {
     url.searchParams.set('pag', page);
@@ -423,7 +397,7 @@ function applyFilters(page = 1) {
 
   if (!container || !infoFooter) return;
 
-  // Manejar visibilidad del carrusel
+  // Handle carousel visibility
   const hasActiveFilters = currentSearch.trim() !== '' || currentColorFilter !== '' || currentTelaFilter !== '' || currentStatusFilter !== '';
   if (carouselSection) {
     if (hasActiveFilters || currentSection !== 'inicio') {
@@ -433,75 +407,57 @@ function applyFilters(page = 1) {
     }
   }
 
-  // Limpiar contenedores
+  // Clear containers
   container.innerHTML = "";
   infoFooter.innerHTML = "";
 
-  // FILTRAR PRODUCTOS
+  // Don't show "no results" if products are still loading
+  if (productos.length === 0 && !window.productsLoaded) {
+    return; // Exit early, products are still loading
+  }
+
+  // Filter products
   const hasSearch = currentSearch.trim() !== '';
 
-  // Lógica de búsqueda avanzada: permite buscar por estado (ej: "moños nuevos")
-  const statusMap = {
-    'nuevo': 'nuevo', 'nuevos': 'nuevo',
-    'oferta': 'oferta', 'ofertas': 'oferta',
-    'agotado': 'agotado', 'agotados': 'agotado'
-  };
-  
-  let searchStatus = '';
-  const searchWords = removeAccents(currentSearch.toLowerCase()).split(' ').filter(w => w.length > 0);
-  const remainingSearchWords = [];
-
-  if (hasSearch) {
-    searchWords.forEach(word => {
-      if (statusMap[word]) {
-        searchStatus = statusMap[word];
-      } else {
-        remainingSearchWords.push(word);
-      }
-    });
-  }
-  const finalSearchTerm = remainingSearchWords.join(' ');
-
   let filteredProducts = productos.filter(p => {
-    // Búsqueda por texto (sin acentos)
-    const searchMatch = !hasSearch || !finalSearchTerm ||
-      removeAccents(p.nombre.toLowerCase()).includes(finalSearchTerm) || 
-      removeAccents(p.descripcion.toLowerCase()).includes(finalSearchTerm);
+    // Search match - buscar en múltiples campos
+    const searchMatch = !hasSearch || 
+      removeAccents(p.nombre.toLowerCase()).includes(removeAccents(currentSearch.toLowerCase())) || 
+      removeAccents(p.descripcion.toLowerCase()).includes(removeAccents(currentSearch.toLowerCase())) ||
+      (p.color && removeAccents(p.color.toLowerCase()).includes(removeAccents(currentSearch.toLowerCase()))) ||
+      (p.tela && removeAccents(p.tela.toLowerCase()).includes(removeAccents(currentSearch.toLowerCase()))) ||
+      (p.status && removeAccents(p.status.toLowerCase()).includes(removeAccents(currentSearch.toLowerCase()))) ||
+      (p.categoria && removeAccents(p.categoria.toLowerCase()).includes(removeAccents(currentSearch.toLowerCase()))) ||
+      p.precio.toString().includes(currentSearch);
     
-    // Filtros de dropdown
+    // Filter matches
     const colorMatch = currentColorFilter === '' || p.color === currentColorFilter;
     const fabricMatch = currentTelaFilter === '' || p.tela === currentTelaFilter;
-    
-    // Filtro de estado (la búsqueda por texto tiene prioridad)
-    const effectiveStatusFilter = searchStatus || currentStatusFilter;
-    const statusMatch = effectiveStatusFilter === '' || (p.status || 'none') === effectiveStatusFilter;
+    const statusMatch = currentStatusFilter === '' || (p.status || 'none') === currentStatusFilter;
 
-    // Si hay una búsqueda activa, se ignoran las categorías y se busca en todos los productos.
-    if (hasSearch) {
-      return searchMatch && colorMatch && fabricMatch && statusMatch;
-    }
-
-    // Si NO hay búsqueda, se aplica el filtro de sección además de los otros.
+    // Section match
     let sectionMatch = false;
-    if (currentSection === 'inicio') {
-      sectionMatch = true; // Mostrar todos en la página de inicio
+    if (hasSearch) {
+      sectionMatch = true; // Show all when searching
+    } else if (currentSection === 'inicio') {
+      sectionMatch = true; // Show all on inicio
     } else if (currentSection === 'monos') {
       sectionMatch = p.categoria === 'monos' || p.categoria === 'setmonos';
     } else {
       sectionMatch = p.categoria === currentSection;
     }
 
-    return sectionMatch && colorMatch && fabricMatch && statusMatch;
+    return searchMatch && colorMatch && fabricMatch && statusMatch && sectionMatch;
   });
 
-  // PAGINACIÓN
+  // Pagination
   const itemsPerPage = getItemsPerPage();
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
   const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
 
-  // Mostrar mensaje si no hay resultados
-  if (filteredProducts.length === 0) {
+  // Show no results message only if products are loaded and there are no results
+  if (filteredProducts.length === 0 && window.productsLoaded) {
     const noResultsMessage = document.createElement('div');
     noResultsMessage.className = 'no-results-message';
     noResultsMessage.innerHTML = `
@@ -512,18 +468,20 @@ function applyFilters(page = 1) {
     return;
   }
 
-  // CREAR Y MOSTRAR PRODUCTOS CON EVENT LISTENERS
+  // Create and show products
   paginatedProducts.forEach(prod => {
     const productElement = createProductElement(prod);
     
-    // Event listener para navegar a detalles
+    // Event listener for navigation to details
     productElement.addEventListener('click', (e) => {
-      if (!e.target.closest('.add-to-cart-btn') && !e.target.closest('.like-btn') && !e.target.closest('.admin-actions')) {
-        window.location.href = `details/details.html?id=${prod.id}`;
+      if (!e.target.closest('.add-to-cart-btn') && !e.target.closest('.admin-actions')) {
+        console.log('🔗 Navegando a detalles del producto:', prod.id);
+        console.log('URL que se va a abrir:', `details.html?id=${encodeURIComponent(prod.id)}`);
+        window.location.href = `details.html?id=${encodeURIComponent(prod.id)}`;
       }
     });
 
-    // Event listener específico para el botón del carrito
+    // Event listener for cart button
     const cartBtn = productElement.querySelector('.add-to-cart-btn');
     if (cartBtn && prod.status !== 'agotado') {
       cartBtn.addEventListener('click', (e) => {
@@ -532,66 +490,46 @@ function applyFilters(page = 1) {
       });
     }
 
-    // Event listener para el contenedor de like
-    const likeContainer = productElement.querySelector('.like-container');
-    if (likeContainer) {
-      likeContainer.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const likeBtn = likeContainer.querySelector('.like-btn');
-        toggleProductLike(prod.id, likeBtn);
-      });
-    }
 
-    // Event listeners para botones de admin
+
+    // Event listeners for admin buttons
     const editBtn = productElement.querySelector('.edit-product-btn');
     const deleteBtn = productElement.querySelector('.delete-product-btn');
     
-    if (editBtn && window.editProduct) {
+    if (editBtn && window.adminFunctions?.editProduct) {
       editBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        window.editProduct(prod.id);
+        window.adminFunctions.editProduct(prod.id);
       });
     }
     
-    if (deleteBtn && window.deleteProduct) {
+    if (deleteBtn && window.adminFunctions?.deleteProduct) {
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        window.deleteProduct(prod.id);
+        window.adminFunctions.deleteProduct(prod.id);
       });
     }
 
     container.appendChild(productElement);
-    
-    // Load like count and status for this product
-    loadProductLikeData(prod.id);
   });
-  
-  // Actualizar estados de likes después de renderizar
-  document.querySelectorAll('.like-btn').forEach(btn => {
-    const productId = btn.dataset.productId;
-    if (productId && window.realtimeLikes) {
-      window.realtimeLikes.loadInitialState(productId);
-    }
-  });
-  
-  // CREAR PAGINACIÓN si hay más de una página
+
+  // Create pagination if needed
   if (totalPages > 1) {
     const pagination = document.createElement('div');
     pagination.className = 'pagination';
 
-    // Botón anterior
+    // Previous button
     if (currentPage > 1) {
       const prevBtn = document.createElement('button');
       prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
       prevBtn.onclick = (e) => {
         e.preventDefault();
         applyFilters(currentPage - 1);
-        scrollToTop();
       };
       pagination.appendChild(prevBtn);
     }
 
-    // Números de página (máximo 3 botones visibles)
+    // Page numbers
     let startPage = Math.max(1, currentPage - 1);
     let endPage = Math.min(totalPages, currentPage + 1);
 
@@ -608,19 +546,17 @@ function applyFilters(page = 1) {
       btn.onclick = (e) => {
         e.preventDefault();
         applyFilters(i);
-        scrollToTop();
       };
       pagination.appendChild(btn);
     }
 
-    // Botón siguiente
+    // Next button
     if (currentPage < totalPages) {
       const nextBtn = document.createElement('button');
       nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
       nextBtn.onclick = (e) => {
         e.preventDefault();
         applyFilters(currentPage + 1);
-        scrollToTop();
       };
       pagination.appendChild(nextBtn);
     }
@@ -628,7 +564,7 @@ function applyFilters(page = 1) {
     infoFooter.appendChild(pagination);
   }
 
-  // Resumen de paginación
+  // Pagination summary
   const summary = document.createElement('div');
   summary.className = 'pagination-summary';
   const startProduct = startIndex + 1;
@@ -637,18 +573,9 @@ function applyFilters(page = 1) {
   infoFooter.appendChild(summary);
 
 
-
 }
 
-// Función para hacer scroll suave al top
-function scrollToTop() {
-  const sectionTitle = document.getElementById('sectionTitle');
-  if (sectionTitle) {
-    sectionTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-}
-
-// Función para limpiar todos los filtros
+// Clear filters
 function clearFilters() {
   currentSearch = '';
   currentColorFilter = '';
@@ -659,132 +586,66 @@ function clearFilters() {
   const searchInput = document.getElementById('searchInput');
   const colorFilter = document.getElementById('colorFilter');
   const telaFilter = document.getElementById('telaFilter');
+  const statusFilter = document.getElementById('statusFilter');
 
   if (searchInput) searchInput.value = '';
   if (colorFilter) colorFilter.value = '';
   if (telaFilter) telaFilter.value = '';
-  const statusFilter = document.getElementById('statusFilter');
   if (statusFilter) statusFilter.value = '';
+  
+  // Hide autocomplete suggestions
+  hideAutocompleteSuggestions();
 
-  // Limpiar parámetros de URL
+  // Clear URL parameters
   const url = new URL(window.location);
   url.searchParams.delete('search');
   url.searchParams.delete('pag');
   window.history.replaceState({}, '', url);
 
-  // Restaurar título original de sección
+  // Restore section title and hide back button
   const sectionTitle = document.getElementById('sectionTitle');
   const searchTermDisplay = document.getElementById('searchTermDisplay');
+  const backButton = document.getElementById('backButton');
+  
   if (sectionTitle && searchTermDisplay) {
     sectionTitle.textContent = getSectionDisplayName(currentSection);
     searchTermDisplay.style.display = 'none';
   }
+  
+  if (backButton) {
+    backButton.style.display = 'none';
+  }
 
-  updateBackButton();
   applyFilters();
 }
 
-// FUNCIÓN PARA AUTOCOMPLETADO DE BÚSQUEDA
-function setupAutocomplete(inputElement) {
-  const resultsContainer = document.getElementById('autocomplete-results');
-  let activeSuggestionIndex = -1;
-
-  inputElement.addEventListener('input', () => {
-    const query = inputElement.value.trim();
-    const normalizedQuery = removeAccents(query.toLowerCase());
-    
-    if (normalizedQuery.length < 2) { // Empezar a buscar después de 2 caracteres
-      resultsContainer.innerHTML = '';
-      resultsContainer.style.display = 'none';
-      inputElement.setAttribute('aria-expanded', 'false');
-      return;
-    }
-
-    // Recolectar sugerencias como objetos para tener más datos (nombre y categoría)
-    const suggestions = [];
-    const addedNames = new Set();
-    productos.forEach(p => {
-        if (suggestions.length < 6 && removeAccents(p.nombre.toLowerCase()).includes(normalizedQuery) && !addedNames.has(p.nombre.toLowerCase())) {
-            suggestions.push({ nombre: p.nombre, categoria: p.categoria });
-            addedNames.add(p.nombre.toLowerCase());
-        }
-    });
-
-    resultsContainer.innerHTML = '';
-    if (suggestions.length > 0) {
-      suggestions.forEach((suggestion, index) => {
-        const item = document.createElement('div');
-        item.className = 'autocomplete-item';
-        
-        // Resaltar el texto que coincide en la sugerencia
-        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        const highlightedName = suggestion.nombre.replace(regex, '<strong>$1</strong>');
-
-        item.innerHTML = `
-          <div class="suggestion-details">
-            <span class="suggestion-name">${highlightedName}</span>
-            <span class="suggestion-category">${suggestion.categoria}</span>
-          </div>
-          <i class="fas fa-search suggestion-icon"></i>
-        `;
-
-        item.id = `suggestion-${index}`;
-        item.setAttribute('role', 'option');
-
-        item.addEventListener('click', () => {
-          inputElement.value = suggestion.nombre; // Usar el nombre original sin HTML
-          resultsContainer.style.display = 'none';
-          inputElement.setAttribute('aria-expanded', 'false');
-          // Disparar el evento 'input' para que la búsqueda se aplique
-          inputElement.dispatchEvent(new Event('input', { bubbles: true }));
-        });
-        resultsContainer.appendChild(item);
-      });
-      resultsContainer.style.display = 'block';
-      inputElement.setAttribute('aria-expanded', 'true');
-      activeSuggestionIndex = -1;
-    } else {
-      // Mostrar mensaje de "no resultados" si no hay sugerencias
-      if (normalizedQuery.length >= 2) {
-        const noResultItem = document.createElement('div');
-        noResultItem.className = 'autocomplete-no-results';
-        noResultItem.textContent = 'No se encontraron sugerencias.';
-        resultsContainer.appendChild(noResultItem);
-        resultsContainer.style.display = 'block';
-        inputElement.setAttribute('aria-expanded', 'true');
-      }
-    }
-  });
-
-  inputElement.addEventListener('keydown', (e) => {
-    const items = resultsContainer.querySelectorAll('.autocomplete-item');
-    if (items.length === 0 || resultsContainer.style.display === 'none') return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      items[activeSuggestionIndex]?.classList.remove('highlighted');
-      activeSuggestionIndex = (activeSuggestionIndex + 1) % items.length;
-      items[activeSuggestionIndex].classList.add('highlighted');
-      inputElement.setAttribute('aria-activedescendant', items[activeSuggestionIndex].id);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      items[activeSuggestionIndex]?.classList.remove('highlighted');
-      activeSuggestionIndex = (activeSuggestionIndex - 1 + items.length) % items.length;
-      items[activeSuggestionIndex].classList.add('highlighted');
-      inputElement.setAttribute('aria-activedescendant', items[activeSuggestionIndex].id);
-    } else if (e.key === 'Enter' && activeSuggestionIndex > -1) {
-      e.preventDefault(); // Prevenir que se cierre el dropdown de búsqueda
-      items[activeSuggestionIndex].click();
-    } else if (e.key === 'Escape') {
-      resultsContainer.style.display = 'none';
-      inputElement.setAttribute('aria-expanded', 'false');
-    }
-  });
+// Go back from search results
+function goBackFromSearch() {
+  clearFilters();
+  closeAllDropdowns();
 }
 
-// FUNCIONES DEL CARRITO
+// Función para limpiar localStorage cuando se excede la cuota
+function clearLocalStorageQuota() {
+  try {
+    // Limpiar datos no esenciales
+    const keysToKeep = ['cart', 'user', 'authToken'];
+    const allKeys = Object.keys(localStorage);
+    
+    allKeys.forEach(key => {
+      if (!keysToKeep.includes(key)) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    console.log('LocalStorage limpiado para liberar espacio');
+  } catch (error) {
+    console.error('Error limpiando localStorage:', error);
+  }
+}
+
+// Cart functions
 function addProductToCart(productId, buttonElement) {
-  // Normalizar ID para comparación (convertir a string)
   const normalizedId = String(productId);
   const product = productos.find(p => String(p.id) === normalizedId);
   if (product) {
@@ -792,18 +653,41 @@ function addProductToCart(productId, buttonElement) {
     if (existingItem) {
       existingItem.quantity++;
     } else {
-      cart.push({ ...product, quantity: 1 });
+      // Mantener el orden de inserción agregando al final
+      cart.push({ ...product, quantity: 1, addedAt: Date.now() });
     }
-    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    try {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    } catch (error) {
+      if (error.name === 'QuotaExceededError') {
+        // Limpiar localStorage y reintentar
+        clearLocalStorageQuota();
+        cart = [];
+        cart.push({ ...product, quantity: 1, addedAt: Date.now() });
+        try {
+          localStorage.setItem('cart', JSON.stringify(cart));
+          alert('El carrito se ha limpiado por falta de espacio. El producto se agregó correctamente.');
+        } catch (retryError) {
+          console.error('Error after cleanup:', retryError);
+          alert('Error: No se pudo agregar el producto. Intenta recargar la página.');
+          return;
+        }
+      } else {
+        console.error('Error adding to cart:', error);
+        return;
+      }
+    }
+    
     updateCartCount();
     
-    // Solo renderizar carrito si está abierto
+    // Only render cart if it's open
     const cartDropdown = document.getElementById('cartDropdown');
     if (cartDropdown && cartDropdown.classList.contains('active')) {
       renderCart();
     }
 
-    // Animación de producto agregado
+    // Animation
     if (buttonElement) {
       const productElement = buttonElement.closest('.product');
       if (productElement) {
@@ -812,7 +696,6 @@ function addProductToCart(productId, buttonElement) {
           productElement.classList.remove('added-to-cart-glow');
         }, 700);
 
-        // Mostrar texto "Agregado"
         const addedText = productElement.querySelector('.added-text');
         if (addedText) {
           addedText.style.display = 'block';
@@ -830,13 +713,11 @@ function addProductToCart(productId, buttonElement) {
 }
 
 function removeProductFromCart(productId) {
-  // Normalizar ID para comparación
   const normalizedId = String(productId);
   cart = cart.filter(item => String(item.id) !== normalizedId);
   localStorage.setItem('cart', JSON.stringify(cart));
   updateCartCount();
   
-  // Solo renderizar carrito si está abierto
   const cartDropdown = document.getElementById('cartDropdown');
   if (cartDropdown && cartDropdown.classList.contains('active')) {
     renderCart();
@@ -844,7 +725,6 @@ function removeProductFromCart(productId) {
 }
 
 function updateCartItemQuantity(productId, change) {
-  // Normalizar ID para comparación
   const normalizedId = String(productId);
   const item = cart.find(item => String(item.id) === normalizedId);
   if (item) {
@@ -853,12 +733,28 @@ function updateCartItemQuantity(productId, change) {
       removeProductFromCart(productId);
       return;
     } else {
-      localStorage.setItem('cart', JSON.stringify(cart));
+      try {
+        localStorage.setItem('cart', JSON.stringify(cart));
+      } catch (error) {
+        if (error.name === 'QuotaExceededError') {
+          clearLocalStorageQuota();
+          cart = [];
+          try {
+            localStorage.setItem('cart', JSON.stringify(cart));
+            alert('El carrito se ha limpiado por falta de espacio.');
+          } catch (retryError) {
+            console.error('Error after cleanup:', retryError);
+            alert('Error: Intenta recargar la página.');
+          }
+          updateCartCount();
+          renderCart();
+          return;
+        }
+      }
     }
   }
   updateCartCount();
   
-  // Solo renderizar carrito si está abierto
   const cartDropdown = document.getElementById('cartDropdown');
   if (cartDropdown && cartDropdown.classList.contains('active')) {
     renderCart();
@@ -896,16 +792,21 @@ function renderCart() {
   }
 
   let total = 0;
-  cart.forEach(item => {
+  // Ordenar por fecha de agregado para mantener el orden de inserción
+  const sortedCart = [...cart].sort((a, b) => (a.addedAt || 0) - (b.addedAt || 0));
+  
+  sortedCart.forEach(item => {
     total += item.precio * item.quantity;
 
     const div = document.createElement('div');
     div.className = 'cart-item';
     div.innerHTML = `
-      <img src="${item.imagen}" alt="${item.nombre}">
-      <div class="cart-item-details">
+      <div class="cart-item-image">
+        <img src="${item.imagen}" alt="${item.nombre}" />
+      </div>
+      <div class="cart-item-info">
         <h4>${item.nombre}</h4>
-        <p>$${item.precio.toLocaleString('es-AR')} x ${item.quantity}</p>
+        <span class="cart-item-price">$${item.precio.toLocaleString('es-AR')}</span>
         <div class="cart-item-quantity">
           <button class="quantity-btn" data-id="${item.id}" data-change="-1">-</button>
           <span>${item.quantity}</span>
@@ -921,14 +822,14 @@ function renderCart() {
 
   cartTotalSpan.textContent = total.toLocaleString('es-AR');
 
-  // Event listeners para botones del carrito
+  // Event listeners for cart buttons
   const removeButtons = cartItemsContainer.querySelectorAll('.remove-item-btn');
   const quantityButtons = cartItemsContainer.querySelectorAll('.quantity-btn');
   
   removeButtons.forEach(button => {
     button.addEventListener('click', (e) => {
       e.stopPropagation();
-      const productId = e.currentTarget.dataset.id; // No convertir a int
+      const productId = e.currentTarget.dataset.id;
       removeProductFromCart(productId);
     });
   });
@@ -936,7 +837,7 @@ function renderCart() {
   quantityButtons.forEach(button => {
     button.addEventListener('click', (e) => {
       e.stopPropagation();
-      const productId = e.currentTarget.dataset.id; // No convertir a int
+      const productId = e.currentTarget.dataset.id;
       const change = parseInt(e.currentTarget.dataset.change);
       updateCartItemQuantity(productId, change);
     });
@@ -944,11 +845,11 @@ function renderCart() {
 }
 
 function sendWhatsAppMessage() {
-  const phoneNumber = '5491166135708';
+  const phoneNumber = '5491151012889';
   let message = "Hola, quiero comprar estos productos:\n";
 
   if (cart.length === 0) {
-    message = "Hola, estoy interesado en sus productos, pero mi carrito está vacío.";
+    message = "Hola, estoy interesado en sus productos.";
   } else {
     cart.forEach(item => {
       message += `- ${item.nombre} (Cantidad: ${item.quantity})\n`;
@@ -960,35 +861,20 @@ function sendWhatsAppMessage() {
       message += `\nTotal: $${totalAmount}\n`;
     }
     message += "\n¿Están disponibles?";
-    
-    // Add purchase to user history if user is logged in
-    if (window.addPurchaseToHistory && cart.length > 0) {
-      const purchaseProducts = cart.map(item => ({
-        id: item.id,
-        nombre: item.nombre,
-        precio: item.precio,
-        quantity: item.quantity,
-        imagen: item.imagen
-      }));
-      
-      const total = cart.reduce((sum, item) => sum + (item.precio * item.quantity), 0);
-      window.addPurchaseToHistory(purchaseProducts, total);
-    }
   }
 
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
   window.open(whatsappUrl, '_blank');
 }
 
-// Función para manejar parámetros de URL
+// URL parameter handling
 function handleUrlParameters() {
   const urlParams = new URLSearchParams(window.location.search);
-  const hash = window.location.hash.substring(1); // Get section from hash
+  const hash = window.location.hash.substring(1);
 
   const searchParam = urlParams.get('search');
   const pageParam = urlParams.get('pag');
 
-  // Priority 1: Search parameter
   if (searchParam) {
     currentSearch = searchParam;
     const searchInput = document.getElementById('searchInput');
@@ -1003,56 +889,73 @@ function handleUrlParameters() {
       searchTermDisplay.style.display = 'block';
     }
 
-    // Si hay una búsqueda, nos aseguramos de que no haya un hash de sección en la URL
     const url = new URL(window.location);
     if (url.hash) {
       url.hash = '';
       window.history.replaceState({}, '', url);
     }
 
-    updateBackButton();
     applyFilters(1);
     return;
   }
 
-  // Priority 2: Section from hash in URL
   if (hash && ['inicio', 'lazos', 'monos', 'colitas', 'scrunchies', 'setmonos'].includes(hash)) {
     showSection(hash);
     return;
   }
   
-  // Priority 3: Pagination parameter (less likely to be used alone)
   if (pageParam) {
     currentPage = parseInt(pageParam) || 1;
     applyFilters(currentPage);
     return;
   }
 
-  // Default behavior: show 'inicio'
   showSection('inicio');
 }
 
-// INICIALIZACIÓN DE LA APLICACIÓN - CORREGIDA
+// Sync productos
+function syncProductos() {
+  if (window.productos && window.productos.length > 0) {
+    productos = [...window.productos];
+    console.log('✅ Productos sincronizados:', productos.length);
+    
+    if (window.initializeMinimalCarousel) {
+      setTimeout(() => window.initializeMinimalCarousel(), 100);
+    }
+    
+    return true;
+  }
+  return false;
+}
+
+// Initialize app
 function initializeApp() {
-  if (isInitialized) return; // Evitar inicialización múltiple
+  if (isInitialized) return;
   isInitialized = true;
 
   console.log('Inicializando aplicación...');
-
-  // Verificar que productos esté disponible
-  if (typeof productos === 'undefined') {
-    console.error('Variable productos no está definida');
-    setTimeout(initializeApp, 100);
-    return;
+  
+  // Show products loading if no products are loaded yet
+  if (!window.productsLoaded && productos.length === 0) {
+    showProductsLoading();
   }
+  
+  // Mark user as online if authenticated
+  setTimeout(async () => {
+    const currentUser = window.authFunctions?.getCurrentUser();
+    if (currentUser && window.userActivitySystem) {
+      await window.userActivitySystem.setUserOnline(currentUser.uid);
+      console.log('🟢 Usuario marcado como online en script.js:', currentUser.uid);
+    } else {
+      console.log('⚠️ userActivitySystem no disponible en script.js');
+    }
+  }, 1000);
 
-  // Manejar parámetros de URL antes de renderizar productos
+  syncProductos();
   handleUrlParameters();
-
-  // Inicializar contador del carrito
   updateCartCount();
 
-  // Event listeners para navegación
+  // Event listeners
   const elements = {
     menuToggle: document.getElementById('menuToggle'),
     searchToggle: document.getElementById('searchToggle'),
@@ -1068,60 +971,65 @@ function initializeApp() {
     statusFilter: document.getElementById('statusFilter')
   };
 
-  // Asignar event listeners solo una vez
-  if (elements.menuToggle && !elements.menuToggle.hasEventListener) {
-    elements.menuToggle.addEventListener('click', toggleMenu);
-    elements.menuToggle.hasEventListener = true;
+  // Assign event listeners
+  if (elements.menuToggle) {
+    elements.menuToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMenu(e);
+    });
   }
   
-  if (elements.searchToggle && !elements.searchToggle.hasEventListener) {
-    elements.searchToggle.addEventListener('click', toggleSearch);
-    elements.searchToggle.hasEventListener = true;
+  if (elements.searchToggle) {
+    elements.searchToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSearch(e);
+    });
   }
   
-  if (elements.searchClose && !elements.searchClose.hasEventListener) {
-    elements.searchClose.addEventListener('click', toggleSearch);
-    elements.searchClose.hasEventListener = true;
+  if (elements.searchClose) {
+    elements.searchClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSearch(e);
+    });
   }
   
-  if (elements.cartToggle && !elements.cartToggle.hasEventListener) {
-    elements.cartToggle.addEventListener('click', toggleCart);
-    elements.cartToggle.hasEventListener = true;
+  if (elements.cartToggle) {
+    elements.cartToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleCart(e);
+    });
   }
   
-  if (elements.cartClose && !elements.cartClose.hasEventListener) {
-    elements.cartClose.addEventListener('click', toggleCart);
-    elements.cartClose.hasEventListener = true;
+  if (elements.cartClose) {
+    elements.cartClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeCart();
+    });
   }
   
-  if (elements.checkoutBtn && !elements.checkoutBtn.hasEventListener) {
+  if (elements.checkoutBtn) {
     elements.checkoutBtn.addEventListener('click', sendWhatsAppMessage);
-    elements.checkoutBtn.hasEventListener = true;
   }
   
-  if (elements.menuOverlay && !elements.menuOverlay.hasEventListener) {
+  if (elements.menuOverlay) {
     elements.menuOverlay.addEventListener('click', closeAllDropdowns);
-    elements.menuOverlay.hasEventListener = true;
   }
 
-  // Ocultar autocompletado al hacer clic fuera
-  document.addEventListener('click', function(e) {
-    const searchContainer = document.querySelector('.search-container');
-    if (searchContainer && !searchContainer.contains(e.target)) {
-      const resultsContainer = document.getElementById('autocomplete-results');
-      if (resultsContainer) {
-        resultsContainer.style.display = 'none';
-        document.getElementById('searchInput')?.setAttribute('aria-expanded', 'false');
-      }
-    }
-  });
-
-  // Funcionalidad de búsqueda
-  if (elements.searchInput && !elements.searchInput.hasEventListener) {
-    setupAutocomplete(elements.searchInput); // Configurar autocompletado
+  // Search functionality with autocomplete
+  if (elements.searchInput) {
+    const autocompleteContainer = document.getElementById('autocomplete-results');
+    
+    // Input event for autocomplete
     elements.searchInput.addEventListener('input', function (e) {
-      currentSearch = e.target.value;
+      const query = e.target.value.trim();
+      currentSearch = query;
       currentPage = 1;
+      currentHighlightIndex = -1;
 
       const url = new URL(window.location);
       if (currentSearch.trim()) {
@@ -1130,77 +1038,145 @@ function initializeApp() {
         url.searchParams.delete('search');
       }
       url.searchParams.delete('pag');
-      url.hash = ''; // Limpiar el hash al buscar
+      url.hash = '';
       window.history.replaceState({}, '', url);
+
+      // Show autocomplete suggestions
+      if (query.length >= 2) {
+        showAutocompleteSuggestions(query);
+      } else {
+        hideAutocompleteSuggestions();
+      }
 
       applyFilters();
 
       const sectionTitle = document.getElementById('sectionTitle');
       const searchTermDisplay = document.getElementById('searchTermDisplay');
+      const backButton = document.getElementById('backButton');
+      
       if (sectionTitle && searchTermDisplay) {
         if (currentSearch.trim()) {
           sectionTitle.textContent = 'Resultados de Búsqueda';
           searchTermDisplay.textContent = `"${currentSearch}"`;
           searchTermDisplay.style.display = 'block';
+          
+          // Show back button
+          if (backButton) {
+            backButton.style.display = 'inline-flex';
+          }
         } else {
           sectionTitle.textContent = getSectionDisplayName(currentSection);
           searchTermDisplay.style.display = 'none';
+          
+          // Hide back button
+          if (backButton) {
+            backButton.style.display = 'none';
+          }
         }
       }
-      updateBackButton();
     });
 
+    // Keyboard navigation for autocomplete
     elements.searchInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
+      const suggestions = autocompleteContainer?.querySelectorAll('.autocomplete-item');
+      
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
+        if (suggestions && suggestions.length > 0) {
+          currentHighlightIndex = Math.min(currentHighlightIndex + 1, suggestions.length - 1);
+          updateHighlight(suggestions);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (suggestions && suggestions.length > 0) {
+          currentHighlightIndex = Math.max(currentHighlightIndex - 1, -1);
+          updateHighlight(suggestions);
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        
+        let searchTerm = '';
+        let shouldNavigateToDetails = false;
+        
+        if (currentHighlightIndex >= 0 && suggestions && suggestions[currentHighlightIndex]) {
+          // Select highlighted suggestion
+          const selectedSuggestion = suggestions[currentHighlightIndex];
+          const suggestionText = selectedSuggestion.dataset.value;
+          const suggestionType = selectedSuggestion.dataset.type;
+          
+          // If it's a product name, go to details page
+          if (suggestionType === 'nombre') {
+            const product = productos.find(p => p.nombre === suggestionText);
+            if (product) {
+              window.location.href = `details.html?id=${encodeURIComponent(product.id)}`;
+              return;
+            }
+          }
+          
+          searchTerm = suggestionText;
+        } else {
+          // No suggestion selected, use current input
+          searchTerm = elements.searchInput.value.trim();
+        }
+        
+        // Perform search if we have a term - redirect to index.html
+        if (searchTerm) {
+          window.location.href = `index.html?search=${encodeURIComponent(searchTerm)}`;
+          return;
+        }
+        
+        // Always close the search dropdown
         toggleSearch();
+      } else if (e.key === 'Escape') {
+        hideAutocompleteSuggestions();
       }
     });
 
-    elements.searchInput.hasEventListener = true;
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.search-container')) {
+        hideAutocompleteSuggestions();
+      }
+    });
   }
 
-  // Funcionalidad de filtros
-  if (elements.colorFilter && !elements.colorFilter.hasEventListener) {
+  // Filter functionality
+  if (elements.colorFilter) {
     elements.colorFilter.addEventListener('change', function (e) {
       currentColorFilter = e.target.value;
       currentPage = 1;
       applyFilters();
     });
-    elements.colorFilter.hasEventListener = true;
   }
 
-  if (elements.telaFilter && !elements.telaFilter.hasEventListener) {
+  if (elements.telaFilter) {
     elements.telaFilter.addEventListener('change', function (e) {
       currentTelaFilter = e.target.value;
       currentPage = 1;
       applyFilters();
     });
-    elements.telaFilter.hasEventListener = true;
   }
 
-  if (elements.statusFilter && !elements.statusFilter.hasEventListener) {
+  if (elements.statusFilter) {
     elements.statusFilter.addEventListener('change', function (e) {
       currentStatusFilter = e.target.value;
       currentPage = 1;
       applyFilters();
     });
-    elements.statusFilter.hasEventListener = true;
   }
 
-  if (elements.clearFiltersBtn && !elements.clearFiltersBtn.hasEventListener) {
+  if (elements.clearFiltersBtn) {
     elements.clearFiltersBtn.addEventListener('click', clearFilters);
-    elements.clearFiltersBtn.hasEventListener = true;
   }
 
-  // Atajos de teclado globales
+  // Global keyboard shortcuts
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       closeAllDropdowns();
     }
   });
 
-  // Manejador de redimensionamiento de ventana
+  // Window resize handler
   let resizeTimeout;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
@@ -1209,199 +1185,411 @@ function initializeApp() {
     }, 150);
   });
 
-  // Lógica para mostrar/ocultar el botón de "Agregar Producto" para administradores
-  const adminControls = document.getElementById('adminControls');
-  if (adminControls) {
-    const currentUserData = window.authFunctions?.getCurrentUserData?.();
-    const isAdmin = currentUserData && currentUserData.role === 'administrador';
-    adminControls.style.display = isAdmin ? 'block' : 'none';
-  }
-
-  // Inicializar sistema de likes en tiempo real
-  if (window.initRealtimeLikes) {
-    window.initRealtimeLikes();
-  }
+  // Initialize admin controls
+  updateAdminControlsVisibility();
 
   console.log('Aplicación inicializada correctamente');
 }
 
-// Función de inicialización para el DOM
-function initializeDOM() {
-  // Asegurar que todos los elementos estén listos
-  const checkElements = () => {
-    const requiredElements = [
-      'menuToggle', 'searchToggle', 'cartToggle', 
-      'searchInput', 'colorFilter', 'telaFilter'
-    ];
-    
-    const allElementsExist = requiredElements.every(id => 
-      document.getElementById(id) !== null
-    );
-
-    if (allElementsExist && typeof productos !== 'undefined') {
-      initializeApp();
-    } else {
-      setTimeout(checkElements, 50);
-    }
-  };
-
-  checkElements();
-}
-
-// Múltiples puntos de entrada para garantizar inicialización
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeDOM);
-} else {
-  initializeDOM();
-}
-
-// Función para generar ID anónimo único
-function generateAnonymousId() {
-  return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-}
-
-// Configurar listener en tiempo real para likes de un producto
-function setupProductLikeListener(productId) {
-  if (!window.firestoreManager || !window.firestoreManager.listenToProductLikes) {
-    return;
-  }
-  
-  // Evitar múltiples listeners para el mismo producto
-  if (window.productListeners && window.productListeners[productId]) {
-    return;
-  }
-  
-  if (!window.productListeners) {
-    window.productListeners = {};
-  }
-  
-  const unsubscribe = window.firestoreManager.listenToProductLikes(productId, (newCount) => {
-    const countElement = document.querySelector(`.like-count[data-product-id="${productId}"]`);
-    if (countElement) {
-      countElement.textContent = newCount;
-    }
-  });
-  
-  window.productListeners[productId] = unsubscribe;
-}
-
-// Limpiar todos los listeners de productos
-function cleanupProductListeners() {
-  if (window.productListeners) {
-    Object.values(window.productListeners).forEach(unsubscribe => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
-    });
-    window.productListeners = {};
+// Show/hide products loading indicator
+function showProductsLoading() {
+  const productsLoading = document.getElementById('productsLoading');
+  if (productsLoading) {
+    productsLoading.style.display = 'flex';
   }
 }
 
-// FUNCIÓN DE LIKES SIMPLE
-async function toggleProductLike(productId, buttonElement) {
-  if (!buttonElement || !window.realtimeLikes) return;
-
-  // Llamar a toggleLike y pasar el elemento del botón para la actualización de UI
-  await window.realtimeLikes.toggleLike(productId, buttonElement);
-}
-
-// Función para refrescar un producto específico
-async function refreshSingleProduct(productId) {
-  const productElement = document.querySelector(`[data-id="${productId}"], .product:has(.like-btn[data-product-id="${productId}"])`);
-  if (!productElement) return;
-  
-  // Encontrar el producto en el array
-  const product = productos.find(p => p.id === productId);
-  if (!product) return;
-  
-  // Crear nuevo elemento del producto
-  const newProductElement = createProductElement(product);
-  
-  // Copiar event listeners
-  setupProductEventListeners(newProductElement, product);
-  
-  // Reemplazar el elemento
-  productElement.parentNode.replaceChild(newProductElement, productElement);
-  
-  // Cargar datos de likes actualizados
-  await loadProductLikeData(productId);
-}
-
-// Función para configurar event listeners de un producto
-function setupProductEventListeners(productElement, product) {
-  // Event listener para navegar a detalles
-  if (product.status !== 'agotado') {
-    productElement.addEventListener('click', (e) => {
-      if (!e.target.closest('.add-to-cart-btn') && !e.target.closest('.like-btn') && !e.target.closest('.admin-actions')) {
-        window.location.href = `details/details.html?id=${product.id}`;
-      }
-    });
-  }
-
-  // Event listener para el botón del carrito
-  const cartBtn = productElement.querySelector('.add-to-cart-btn');
-  if (cartBtn && product.status !== 'agotado') {
-    cartBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      addProductToCart(product.id, cartBtn);
-    });
-  }
-
-  // Event listener para el contenedor de like
-  const likeContainer = productElement.querySelector('.like-container');
-  if (likeContainer) {
-    likeContainer.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const likeBtn = likeContainer.querySelector('.like-btn');
-      toggleProductLike(product.id, likeBtn);
-    });
-  }
-
-  // Event listeners para botones de admin
-  const editBtn = productElement.querySelector('.edit-product-btn');
-  const deleteBtn = productElement.querySelector('.delete-product-btn');
-  
-  if (editBtn && window.editProduct) {
-    editBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      window.editProduct(product.id);
-    });
-  }
-  
-  if (deleteBtn && window.deleteProduct) {
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      window.deleteProduct(product.id);
-    });
+function hideProductsLoading() {
+  const productsLoading = document.getElementById('productsLoading');
+  if (productsLoading) {
+    productsLoading.style.display = 'none';
   }
 }
 
-async function loadProductLikeData(productId) {
-  if (window.simpleLikes) {
-    window.simpleLikes.updateButton(productId);
-  }
-}
-
-// Función global para exponer showSection (necesaria para el HTML)
-window.showSection = showSection;
-window.applyFilters = applyFilters;
-
-// Limpiar funciones duplicadas del HTML
-window.addEventListener('load', function() {
-  // Remover cualquier renderizado duplicado del HTML
-  const sections = ['inicio', 'lazos', 'monos', 'colitas', 'scrunchies', 'setmonos'];
-  sections.forEach(sectionId => {
-    const section = document.getElementById(sectionId);
-    if (section && section.children.length > 0) {
-      // Solo limpiar si no hay filtros activos para evitar conflictos
-      if (!currentSearch && !currentColorFilter && !currentTelaFilter) {
-        section.innerHTML = '';
-      }
-    }
-  });
-  
-  // Re-renderizar solo si es necesario
-  if (isInitialized && !currentSearch && !currentColorFilter && !currentTelaFilter) {
+// Listen for products loaded
+window.addEventListener('productsLoaded', () => {
+  console.log('🔄 Productos cargados, sincronizando...');
+  syncProductos();
+  window.productsLoaded = true;
+  hideProductsLoading();
+  if (isInitialized) {
     applyFilters(currentPage);
   }
 });
+
+// Prevent all automatic scrolling
+function preventAutoScroll() {
+  let savedScrollPosition = 0;
+  
+  // Prevent scroll restoration
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  
+  // Prevent hash scroll
+  window.addEventListener('hashchange', function(e) {
+    e.preventDefault();
+  });
+  
+  // Handle mobile viewport changes
+  if (window.innerWidth <= 768) {
+    let viewportHeight = window.innerHeight;
+    
+    window.addEventListener('resize', function() {
+      const currentHeight = window.innerHeight;
+      if (Math.abs(currentHeight - viewportHeight) > 100) {
+        // Browser bar appeared/disappeared
+        window.scrollTo(0, savedScrollPosition);
+      }
+      viewportHeight = currentHeight;
+    });
+    
+    // Save scroll position periodically
+    window.addEventListener('scroll', function() {
+      savedScrollPosition = window.pageYOffset;
+    }, { passive: true });
+  }
+  
+  // Prevent focus-induced scrolling
+  document.addEventListener('focusin', function(e) {
+    e.preventDefault();
+  });
+}
+
+// Initialize scroll prevention immediately
+preventAutoScroll();
+
+// Additional scroll prevention for specific events
+document.addEventListener('DOMContentLoaded', function() {
+  // Prevent scroll on link clicks with preventDefault
+  document.addEventListener('click', function(e) {
+    if (e.target.matches('a[href="#"], a[onclick*="preventDefault"]')) {
+      e.preventDefault();
+    }
+  });
+});
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  setTimeout(initializeApp, 100);
+}
+
+// Initialize when window loads
+window.addEventListener('load', () => {
+  if (!isInitialized) {
+    setTimeout(initializeApp, 200);
+  }
+});
+
+// Update admin controls visibility
+async function updateAdminControlsVisibility() {
+  const currentUser = window.authFunctions?.getCurrentUser?.();
+  let isAdmin = false;
+  
+  if (currentUser) {
+    // Check localStorage first (updated by auth.js)
+    const userData = window.authFunctions?.getCurrentUserData?.();
+    if (userData && userData.role === 'administrador') {
+      isAdmin = true;
+    } else if (window.firestoreManager) {
+      // Fallback to Firestore check
+      try {
+        const adminDoc = await window.firestoreManager.getDocument('admin', currentUser.uid);
+        isAdmin = adminDoc.exists();
+      } catch (error) {
+        console.log('Error checking admin status:', error);
+        isAdmin = false;
+      }
+    }
+  }
+  
+  // Show/hide main admin controls (only on inicio)
+  const adminControls = document.getElementById('adminControls');
+  if (adminControls) {
+    adminControls.style.display = (isAdmin && currentSection === 'inicio') ? 'block' : 'none';
+  }
+  
+  // Show/hide section add buttons (on all sections except inicio)
+  const sectionAddBtn = document.getElementById('sectionAddProductBtn');
+  if (sectionAddBtn) {
+    sectionAddBtn.style.display = (isAdmin && currentSection !== 'inicio') ? 'block' : 'none';
+  }
+  
+  // Update product admin buttons visibility
+  const adminButtons = document.querySelectorAll('.admin-actions');
+  adminButtons.forEach(btn => {
+    btn.style.display = isAdmin ? 'flex' : 'none';
+  });
+}
+
+// Carousel autoplay management
+window.minimalCarousel = {
+  autoplayInterval: null,
+  autoplayEnabled: true,
+  
+  startAutoplay() {
+    if (this.autoplayInterval) {
+      clearInterval(this.autoplayInterval);
+    }
+    
+    this.autoplayEnabled = true;
+    this.autoplayInterval = setInterval(() => {
+      if (this.autoplayEnabled && currentSection === 'inicio') {
+        const nextBtn = document.getElementById('minimalCarouselNext');
+        if (nextBtn) {
+          nextBtn.click();
+        }
+      }
+    }, 4000); // Change slide every 4 seconds
+    
+    console.log('🎠 Carousel autoplay started');
+  },
+  
+  stopAutoplay() {
+    if (this.autoplayInterval) {
+      clearInterval(this.autoplayInterval);
+      this.autoplayInterval = null;
+    }
+    this.autoplayEnabled = false;
+    console.log('🛑 Carousel autoplay stopped');
+  },
+  
+  pauseAutoplay() {
+    this.autoplayEnabled = false;
+  },
+  
+  resumeAutoplay() {
+    this.autoplayEnabled = true;
+  }
+};
+
+// Initialize carousel autoplay when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  // Start autoplay by default
+  setTimeout(() => {
+    if (window.carouselAutoplayEnabled !== false) {
+      window.minimalCarousel.startAutoplay();
+    }
+  }, 2000);
+  
+  // Pause autoplay on hover
+  const carouselContainer = document.querySelector('.minimal-carousel-container');
+  if (carouselContainer) {
+    carouselContainer.addEventListener('mouseenter', () => {
+      window.minimalCarousel.pauseAutoplay();
+    });
+    
+    carouselContainer.addEventListener('mouseleave', () => {
+      window.minimalCarousel.resumeAutoplay();
+    });
+  }
+});
+
+// Autocomplete functions
+function showAutocompleteSuggestions(query) {
+  const autocompleteContainer = document.getElementById('autocomplete-results');
+  if (!autocompleteContainer) return;
+
+  const normalizedQuery = removeAccents(query.toLowerCase());
+  const suggestions = new Set();
+  const maxSuggestions = 8;
+
+  // Search in products
+  productos.forEach(product => {
+    const matches = [];
+    
+    // Check product name
+    if (removeAccents(product.nombre.toLowerCase()).includes(normalizedQuery)) {
+      matches.push({
+        text: product.nombre,
+        type: 'nombre',
+        category: product.categoria,
+        price: product.precio,
+        status: product.status
+      });
+    }
+    
+    // Check color
+    if (product.color && removeAccents(product.color.toLowerCase()).includes(normalizedQuery)) {
+      matches.push({
+        text: product.color,
+        type: 'color',
+        category: product.categoria,
+        price: product.precio,
+        status: product.status
+      });
+    }
+    
+    // Check fabric/material
+    if (product.tela && removeAccents(product.tela.toLowerCase()).includes(normalizedQuery)) {
+      matches.push({
+        text: product.tela,
+        type: 'tela',
+        category: product.categoria,
+        price: product.precio,
+        status: product.status
+      });
+    }
+    
+    // Check status
+    if (product.status && removeAccents(product.status.toLowerCase()).includes(normalizedQuery)) {
+      matches.push({
+        text: product.status,
+        type: 'estado',
+        category: product.categoria,
+        price: product.precio,
+        status: product.status
+      });
+    }
+    
+    // Check category
+    if (product.categoria && removeAccents(product.categoria.toLowerCase()).includes(normalizedQuery)) {
+      matches.push({
+        text: product.categoria,
+        type: 'categoria',
+        category: product.categoria,
+        price: product.precio,
+        status: product.status
+      });
+    }
+    
+    // Check price range
+    const priceStr = product.precio.toString();
+    if (priceStr.includes(query)) {
+      matches.push({
+        text: `$${product.precio.toLocaleString('es-AR')}`,
+        type: 'precio',
+        category: product.categoria,
+        price: product.precio,
+        status: product.status
+      });
+    }
+    
+    matches.forEach(match => {
+      if (suggestions.size < maxSuggestions) {
+        const suggestionKey = `${match.text}-${match.type}`;
+        if (!Array.from(suggestions).some(s => s.key === suggestionKey)) {
+          suggestions.add({ ...match, key: suggestionKey });
+        }
+      }
+    });
+  });
+
+  // Convert Set to Array and sort
+  const sortedSuggestions = Array.from(suggestions).sort((a, b) => {
+    // Prioritize exact matches
+    const aExact = removeAccents(a.text.toLowerCase()) === normalizedQuery;
+    const bExact = removeAccents(b.text.toLowerCase()) === normalizedQuery;
+    if (aExact && !bExact) return -1;
+    if (!aExact && bExact) return 1;
+    
+    // Then by type priority
+    const typePriority = { 'nombre': 1, 'categoria': 2, 'color': 3, 'tela': 4, 'estado': 5, 'precio': 6 };
+    return (typePriority[a.type] || 7) - (typePriority[b.type] || 7);
+  });
+
+  if (sortedSuggestions.length === 0) {
+    autocompleteContainer.innerHTML = '<div class="autocomplete-no-results">No se encontraron sugerencias</div>';
+  } else {
+    autocompleteContainer.innerHTML = sortedSuggestions.map(suggestion => {
+      const highlightedText = highlightMatch(suggestion.text, query);
+      const typeLabels = {
+        'nombre': 'Producto',
+        'color': 'Color',
+        'tela': 'Material',
+        'estado': 'Estado',
+        'categoria': 'Categoría',
+        'precio': 'Precio'
+      };
+      
+      return `
+        <div class="autocomplete-item" data-value="${suggestion.text}" data-type="${suggestion.type}">
+          <div class="suggestion-details">
+            <div class="suggestion-name">${highlightedText}</div>
+            <div class="suggestion-category">${typeLabels[suggestion.type]} • ${suggestion.category}</div>
+          </div>
+          <div class="suggestion-icon">
+            <i class="fas fa-search"></i>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    // Add click listeners to suggestions
+    autocompleteContainer.querySelectorAll('.autocomplete-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const value = this.dataset.value;
+        const type = this.dataset.type;
+        
+        // If it's a product name, go to details page
+        if (type === 'nombre') {
+          const product = productos.find(p => p.nombre === value);
+          if (product) {
+            window.location.href = `details.html?id=${encodeURIComponent(product.id)}`;
+            return;
+          }
+        }
+        
+        // Otherwise, search for the term - redirect to index.html
+        window.location.href = `index.html?search=${encodeURIComponent(value)}`;
+      });
+    });
+  }
+
+  autocompleteContainer.style.display = 'block';
+  autocompleteContainer.setAttribute('aria-expanded', 'true');
+}
+
+function hideAutocompleteSuggestions() {
+  const autocompleteContainer = document.getElementById('autocomplete-results');
+  if (autocompleteContainer) {
+    autocompleteContainer.style.display = 'none';
+    autocompleteContainer.setAttribute('aria-expanded', 'false');
+  }
+}
+
+function highlightMatch(text, query) {
+  if (!query) return text;
+  
+  const normalizedText = removeAccents(text.toLowerCase());
+  const normalizedQuery = removeAccents(query.toLowerCase());
+  const index = normalizedText.indexOf(normalizedQuery);
+  
+  if (index === -1) return text;
+  
+  const before = text.substring(0, index);
+  const match = text.substring(index, index + query.length);
+  const after = text.substring(index + query.length);
+  
+  return `${before}<strong>${match}</strong>${after}`;
+}
+
+function updateHighlight(suggestions) {
+  suggestions.forEach((item, index) => {
+    if (index === currentHighlightIndex) {
+      item.classList.add('highlighted');
+    } else {
+      item.classList.remove('highlighted');
+    }
+  });
+}
+
+// Export global functions
+window.showSection = showSection;
+window.applyFilters = applyFilters;
+window.toggleMenu = toggleMenu;
+window.toggleSearch = toggleSearch;
+window.toggleCart = toggleCart;
+window.closeCart = closeCart;
+window.closeAllDropdowns = closeAllDropdowns;
+window.addProductToCart = addProductToCart;
+window.updateAdminControlsVisibility = updateAdminControlsVisibility;
+window.goBackFromSearch = goBackFromSearch;
+window.clearFilters = clearFilters;
+window.clearLocalStorageQuota = clearLocalStorageQuota;
+window.showAutocompleteSuggestions = showAutocompleteSuggestions;
+window.hideAutocompleteSuggestions = hideAutocompleteSuggestions;
+window.showProductsLoading = showProductsLoading;
+window.hideProductsLoading = hideProductsLoading;
